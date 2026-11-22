@@ -179,6 +179,14 @@ func fetchToken() {
 func buildTimelinePage() {
 	list = tview.NewList().ShowSecondaryText(true)
 	list.SetBorder(true).SetTitle("Timeline")
+	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		if len(posts) == 0 || loading {
+			return
+		}
+		if index == len(posts)-1 {
+			loadMore()
+		}
+	})
 	btns := tview.NewFlex().SetDirection(tview.FlexColumn)
 	for _, b := range []struct {
 		label string
