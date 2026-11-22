@@ -1,0 +1,11 @@
+# Binaries
+citrus
+*.exe
+
+# Go
+*.test
+*.out
+
+# IDE
+.idea/
+.vscode/
