@@ -117,7 +117,7 @@ func (m model) Init() tea.Cmd {
 	if m.client != nil {
 		return loadTimelineCmd(m.client)
 	}
-	return nil
+	return textinput.Blink
 }
 
 func loadTimelineCmd(c *uwuzu.Client) tea.Cmd {
@@ -353,7 +353,14 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			}
 		}
 	}
-	return m, nil
+	var cmd tea.Cmd
+	switch m.screen {
+	case screenLogin:
+		m.serverInput, cmd = m.serverInput.Update(msg)
+	case screenCompose:
+		m.composeInput, cmd = m.composeInput.Update(msg)
+	}
+	return m, cmd
 }
 
 func (m model) View() string {
