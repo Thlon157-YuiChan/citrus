@@ -8,7 +8,7 @@ import (
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
-	_ "image/png"
+	"image/png"
 	"io"
 	"net/http"
 	"os"
@@ -423,12 +423,22 @@ func showDetail(p core.Post) {
 					app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
 					return
 				}
-				tmp, err := os.CreateTemp("", "citrus-img-*")
+				im, _, err := image.Decode(bytes.NewReader(data))
+				if err != nil {
+					app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
+					return
+				}
+				tmp, err := os.CreateTemp("", "citrus-img-*.png")
 				if err != nil {
 					app.QueueUpdateDraw(func() { status.SetText("Temp file failed: " + err.Error()) })
 					return
 				}
-				tmp.Write(data)
+				if err := png.Encode(tmp, im); err != nil {
+					tmp.Close()
+					os.Remove(tmp.Name())
+					app.QueueUpdateDraw(func() { status.SetText("PNG encode failed: " + err.Error()) })
+					return
+				}
 				tmp.Close()
 				path := tmp.Name()
 				app.Suspend(func() {
