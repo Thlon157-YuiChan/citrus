@@ -179,6 +179,7 @@ func fetchToken() {
 func buildTimelinePage() {
 	list = tview.NewList().ShowSecondaryText(true)
 	list.SetBorder(true).SetTitle("Timeline")
+	list.SetWrapAround(false)
 	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		if len(posts) == 0 || loading {
 			return
@@ -356,6 +357,7 @@ func buildComposePage() {
 func buildNotificationsPage() {
 	notifList = tview.NewList().ShowSecondaryText(true)
 	notifList.SetBorder(true).SetTitle("Notifications")
+	notifList.SetWrapAround(false)
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
 	})
