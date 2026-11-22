@@ -233,7 +233,7 @@ func loadTimeline() {
 				return
 			}
 			posts = ps
-			page = 1
+			page = 2
 			refreshTimelineList()
 			status.SetText(fmt.Sprintf("Loaded %d posts", len(posts)))
 		})
