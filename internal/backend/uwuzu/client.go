@@ -3,6 +3,7 @@ package uwuzu
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -116,6 +117,31 @@ func toPost(p uwuzuPost) core.Post {
 	}
 }
 
+func decodePostList(body []byte) ([]core.Post, error) {
+	var posts []uwuzuPost
+	if err := json.Unmarshal(body, &posts); err == nil {
+		out := make([]core.Post, 0, len(posts))
+		for _, p := range posts {
+			out = append(out, toPost(p))
+		}
+		return out, nil
+	}
+	var errObj struct {
+		ErrorCode string `json:"error_code"`
+		Success   bool   `json:"success"`
+		Message   string `json:"message"`
+	}
+	if json.Unmarshal(body, &errObj) == nil {
+		if errObj.ErrorCode != "" {
+			return nil, fmt.Errorf("%s", errObj.ErrorCode)
+		}
+		if !errObj.Success && errObj.Message != "" {
+			return nil, fmt.Errorf("%s", errObj.Message)
+		}
+	}
+	return nil, fmt.Errorf("unexpected response: %s", string(body))
+}
+
 func (c *Client) doJSON(method, path string, body interface{}, out interface{}) error {
 	var req *http.Request
 	var err error
@@ -192,15 +218,15 @@ func (c *Client) HomeTimeline(limit, page int) ([]core.Post, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	var posts []uwuzuPost
-	if err := json.NewDecoder(resp.Body).Decode(&posts); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
-	out := make([]core.Post, 0, len(posts))
-	for _, p := range posts {
-		out = append(out, toPost(p))
+	posts, err := decodePostList(body)
+	if err != nil {
+		return nil, err
 	}
-	return out, nil
+	return posts, nil
 }
 
 func (c *Client) Mentions(limit, page int) ([]core.Post, error) {
@@ -216,15 +242,15 @@ func (c *Client) Mentions(limit, page int) ([]core.Post, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	var posts []uwuzuPost
-	if err := json.NewDecoder(resp.Body).Decode(&posts); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
-	out := make([]core.Post, 0, len(posts))
-	for _, p := range posts {
-		out = append(out, toPost(p))
+	posts, err := decodePostList(body)
+	if err != nil {
+		return nil, err
 	}
-	return out, nil
+	return posts, nil
 }
 
 func (c *Client) Replies(postID string, limit, page int) ([]core.Post, error) {
@@ -240,15 +266,15 @@ func (c *Client) Replies(postID string, limit, page int) ([]core.Post, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
-	var posts []uwuzuPost
-	if err := json.NewDecoder(resp.Body).Decode(&posts); err != nil {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
-	out := make([]core.Post, 0, len(posts))
-	for _, p := range posts {
-		out = append(out, toPost(p))
+	posts, err := decodePostList(body)
+	if err != nil {
+		return nil, err
 	}
-	return out, nil
+	return posts, nil
 }
 
 func (c *Client) User(userID string) (core.User, error) {
@@ -316,7 +342,7 @@ func (c *Client) DeletePost(postID string) error {
 }
 
 func (c *Client) Favorite(postID string) error {
-	u := c.BaseURL + "/api/ueuse/favorite?token=" + url.QueryEscape(c.Token) + "&uniqid=" + url.QueryEscape(postID)
+	u := c.BaseURL + "/api/favorite/change?token=" + url.QueryEscape(c.Token) + "&uniqid=" + url.QueryEscape(postID)
 	resp, err := c.HTTP.Get(u)
 	if err != nil {
 		return err
@@ -326,7 +352,7 @@ func (c *Client) Favorite(postID string) error {
 }
 
 func (c *Client) Unfavorite(postID string) error {
-	u := c.BaseURL + "/api/ueuse/unfavorite?token=" + url.QueryEscape(c.Token) + "&uniqid=" + url.QueryEscape(postID)
+	u := c.BaseURL + "/api/favorite/change?token=" + url.QueryEscape(c.Token) + "&uniqid=" + url.QueryEscape(postID)
 	resp, err := c.HTTP.Get(u)
 	if err != nil {
 		return err
