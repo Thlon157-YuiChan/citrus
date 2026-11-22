@@ -35,6 +35,10 @@ type timelineMsg struct {
 type postedMsg struct {
 	err error
 }
+type moreMsg struct {
+	posts []core.Post
+	err   error
+}
 type notificationMsg struct {
 	items []core.Notification
 	err   error
@@ -56,6 +60,7 @@ type model struct {
 
 	posts  []core.Post
 	cursor int
+	page   int
 
 	notifications []core.Notification
 	notifCursor   int
@@ -127,6 +132,13 @@ func loadTimelineCmd(c *uwuzu.Client) tea.Cmd {
 	}
 }
 
+func loadMoreCmd(c *uwuzu.Client, page int) tea.Cmd {
+	return func() tea.Msg {
+		posts, err := c.HomeTimeline(25, page)
+		return moreMsg{posts: posts, err: err}
+	}
+}
+
 func loadNotificationsCmd(c *uwuzu.Client) tea.Cmd {
 	return func() tea.Msg {
 		items, err := c.Notifications(25, 0)
@@ -186,6 +198,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.posts = msg.posts
 		m.cursor = 0
+		m.page = 1
+		m.err = nil
+		return m, nil
+	case moreMsg:
+		m.loading = false
+		if msg.err != nil {
+			m.err = msg.err
+			return m, nil
+		}
+		m.posts = append(m.posts, msg.posts...)
+		if len(msg.posts) > 0 {
+			m.page++
+		}
 		m.err = nil
 		return m, nil
 	case postedMsg:
@@ -264,7 +289,14 @@ func (m model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "r":
 			m.loading = true
 			m.err = nil
+			m.page = 0
 			return m, loadTimelineCmd(m.client)
+		case "l", "pgdown":
+			if !m.loading {
+				m.loading = true
+				m.err = nil
+				return m, loadMoreCmd(m.client, m.page)
+			}
 		case "n":
 			m.screen = screenNotifications
 			m.loading = true
@@ -377,7 +409,7 @@ func (m model) View() string {
 			return "No posts.\n(p compose, r refresh, q quit)\n" + errView(m.err)
 		}
 		var b strings.Builder
-		b.WriteString("Timeline (j/k move, Enter reply, p compose, f favorite, d delete, n notifications, r refresh, q quit)\n\n")
+		b.WriteString("Timeline (j/k move, Enter reply, p compose, f favorite, d delete, n notifications, l load more, r refresh, q quit)\n\n")
 		for i, p := range m.posts {
 			cursor := "  "
 			if i == m.cursor {
