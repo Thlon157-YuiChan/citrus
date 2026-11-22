@@ -32,6 +32,7 @@ var (
 	composeArea  *tview.TextArea
 	detailText   *tview.TextView
 	detailImages *tview.Flex
+	detailFlex   *tview.Flex
 	serverInput  *tview.InputField
 	waitingText  *tview.TextView
 
@@ -398,15 +399,17 @@ func buildDetailPage() {
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
 	})
-	flex := tview.NewFlex().SetDirection(tview.FlexRow)
-	flex.AddItem(detailText, 0, 1, true)
-	flex.AddItem(detailImages, 20, 0, false)
+	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
+	detailFlex.AddItem(detailText, 0, 1, true)
+	detailFlex.AddItem(detailImages, 20, 0, false)
+	flex := detailFlex
 	flex.AddItem(backBtn, 3, 0, false)
 	flex.AddItem(status, 5, 0, false)
 	pages.AddPage("detail", flex, true, false)
 }
 
 func showDetail(p core.Post) {
+	sixelShown := false
 	// Prioritize Sixel rendering when supported.
 	if len(p.Images) > 0 {
 		if _, err := exec.LookPath("img2sixel"); err == nil {
@@ -451,12 +454,19 @@ func showDetail(p core.Post) {
 					bufio.NewReader(os.Stdin).ReadString('\n')
 				})
 				os.Remove(path)
+				sixelShown = true
 			}()
 		}
 	}
 	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.Text))
+	if sixelShown {
+		detailFlex.ResizeItem(detailImages, 0, 0)
+	} else {
+		detailFlex.ResizeItem(detailImages, 20, 0)
+	}
 	detailImages.Clear()
-	for _, u := range p.Images {
+	if !sixelShown {
+		for _, u := range p.Images {
 		imgView := tview.NewImage()
 		imgView.SetSize(20, 40)
 		imgView.SetColors(tview.TrueColor)
@@ -483,6 +493,7 @@ func showDetail(p core.Post) {
 				status.SetText("Image loaded (" + format + ")")
 			})
 		}(u, imgView)
+	}
 	}
 	pages.SwitchToPage("detail")
 }
