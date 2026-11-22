@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	_ "golang.org/x/image/webp"
@@ -10,6 +11,7 @@ import (
 	_ "image/png"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -405,6 +407,43 @@ func buildDetailPage() {
 }
 
 func showDetail(p core.Post) {
+	// Prioritize Sixel rendering when supported.
+	if len(p.Images) > 0 {
+		if _, err := exec.LookPath("img2sixel"); err == nil {
+			func() {
+				// Download to temp file.
+				resp, err := http.Get(p.Images[0])
+				if err != nil {
+					app.QueueUpdateDraw(func() { status.SetText("Image download failed: " + err.Error()) })
+					return
+				}
+				defer resp.Body.Close()
+				data, err := io.ReadAll(resp.Body)
+				if err != nil {
+					app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
+					return
+				}
+				tmp, err := os.CreateTemp("", "citrus-img-*")
+				if err != nil {
+					app.QueueUpdateDraw(func() { status.SetText("Temp file failed: " + err.Error()) })
+					return
+				}
+				tmp.Write(data)
+				tmp.Close()
+				path := tmp.Name()
+				app.Suspend(func() {
+					cmd := exec.Command("img2sixel", path)
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					_ = cmd.Run()
+					fmt.Println()
+					fmt.Println("Press Enter to return...")
+					bufio.NewReader(os.Stdin).ReadString('\n')
+				})
+				os.Remove(path)
+			}()
+		}
+	}
 	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.Text))
 	detailImages.Clear()
 	for _, u := range p.Images {
