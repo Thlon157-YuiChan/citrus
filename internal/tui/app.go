@@ -400,8 +400,8 @@ func buildDetailPage() {
 		pages.SwitchToPage("timeline")
 	})
 	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
-	detailFlex.AddItem(detailText, 0, 1, true)
 	detailFlex.AddItem(detailImages, 20, 0, false)
+	detailFlex.AddItem(detailText, 0, 1, true)
 	flex := detailFlex
 	flex.AddItem(backBtn, 3, 0, false)
 	flex.AddItem(status, 5, 0, false)
@@ -467,33 +467,33 @@ func showDetail(p core.Post) {
 	detailImages.Clear()
 	if !sixelShown {
 		for _, u := range p.Images {
-		imgView := tview.NewImage()
-		imgView.SetSize(20, 40)
-		imgView.SetColors(tview.TrueColor)
-		detailImages.AddItem(imgView, 40, 0, false)
-		go func(url string, iv *tview.Image) {
-			resp, err := http.Get(url)
-			if err != nil {
-				app.QueueUpdateDraw(func() { status.SetText("Image load failed: " + err.Error()) })
-				return
-			}
-			defer resp.Body.Close()
-			data, err := io.ReadAll(resp.Body)
-			if err != nil {
-				app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
-				return
-			}
-			im, format, err := image.Decode(bytes.NewReader(data))
-			if err != nil {
-				app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
-				return
-			}
-			app.QueueUpdateDraw(func() {
-				iv.SetImage(im)
-				status.SetText("Image loaded (" + format + ")")
-			})
-		}(u, imgView)
-	}
+			imgView := tview.NewImage()
+			imgView.SetSize(20, 40)
+			imgView.SetColors(tview.TrueColor)
+			detailImages.AddItem(imgView, 40, 0, false)
+			go func(url string, iv *tview.Image) {
+				resp, err := http.Get(url)
+				if err != nil {
+					app.QueueUpdateDraw(func() { status.SetText("Image load failed: " + err.Error()) })
+					return
+				}
+				defer resp.Body.Close()
+				data, err := io.ReadAll(resp.Body)
+				if err != nil {
+					app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
+					return
+				}
+				im, format, err := image.Decode(bytes.NewReader(data))
+				if err != nil {
+					app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
+					return
+				}
+				app.QueueUpdateDraw(func() {
+					iv.SetImage(im)
+					status.SetText("Image loaded (" + format + ")")
+				})
+			}(u, imgView)
+		}
 	}
 	pages.SwitchToPage("detail")
 }
