@@ -408,24 +408,29 @@ func showDetail(p core.Post) {
 	detailImages.Clear()
 	for _, u := range p.Images {
 		imgView := tview.NewImage()
-		imgView.SetSize(40, 20)
+		imgView.SetSize(20, 40)
+		imgView.SetColors(tview.TrueColor)
 		detailImages.AddItem(imgView, 40, 0, false)
 		go func(url string, iv *tview.Image) {
 			resp, err := http.Get(url)
 			if err != nil {
+				app.QueueUpdateDraw(func() { status.SetText("Image load failed: " + err.Error()) })
 				return
 			}
 			defer resp.Body.Close()
 			data, err := io.ReadAll(resp.Body)
 			if err != nil {
+				app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
 				return
 			}
-			im, _, err := image.Decode(bytes.NewReader(data))
+			im, format, err := image.Decode(bytes.NewReader(data))
 			if err != nil {
+				app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
 				return
 			}
 			app.QueueUpdateDraw(func() {
 				iv.SetImage(im)
+				status.SetText("Image loaded (" + format + ")")
 			})
 		}(u, imgView)
 	}
