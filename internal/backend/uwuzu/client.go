@@ -126,6 +126,51 @@ func decodePostList(body []byte) ([]core.Post, error) {
 		}
 		return out, nil
 	}
+	// object form: {"success":true,"0":{...},...}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(body, &raw); err == nil {
+		if v, ok := raw["success"]; ok {
+			var okb bool
+			_ = json.Unmarshal(v, &okb)
+		}
+		// collect numeric keys
+		type kv struct {
+			key string
+			idx int
+		}
+		var keys []string
+		for k := range raw {
+			if k == "success" {
+				continue
+			}
+			keys = append(keys, k)
+		}
+		// sort numerically
+		// simple insertion sort
+		for i := 1; i < len(keys); i++ {
+			j := i
+			for j > 0 {
+				a, _ := strconv.Atoi(keys[j-1])
+				b, _ := strconv.Atoi(keys[j])
+				if a <= b {
+					break
+				}
+				keys[j-1], keys[j] = keys[j], keys[j-1]
+				j--
+			}
+		}
+		out := make([]core.Post, 0, len(keys))
+		for _, k := range keys {
+			var p uwuzuPost
+			if err := json.Unmarshal(raw[k], &p); err != nil {
+				continue
+			}
+			out = append(out, toPost(p))
+		}
+		if len(out) > 0 {
+			return out, nil
+		}
+	}
 	var errObj struct {
 		ErrorCode string `json:"error_code"`
 		Success   bool   `json:"success"`
