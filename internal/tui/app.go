@@ -248,16 +248,21 @@ func loadMore() {
 	go func() {
 		ps, err := client.HomeTimeline(25, page)
 		app.QueueUpdateDraw(func() {
-			loading = false
 			if err != nil {
+				loading = false
 				status.SetText("Load more error: " + err.Error())
 				return
 			}
+			oldCount := len(posts)
 			posts = append(posts, ps...)
 			if len(ps) > 0 {
 				page++
 			}
 			refreshTimelineList()
+			if oldCount < len(posts) {
+				list.SetCurrentItem(oldCount)
+			}
+			loading = false
 			status.SetText(fmt.Sprintf("Loaded %d posts", len(posts)))
 		})
 	}()
