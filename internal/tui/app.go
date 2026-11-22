@@ -8,32 +8,32 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/chihaya/citrus/internal/backend/uwuzu"
 	"github.com/chihaya/citrus/internal/config"
 	"github.com/chihaya/citrus/internal/core"
-	"github.com/chihaya/citrus/internal/backend/uwuzu"
 )
 
 var (
-	app          *tview.Application
-	pages        *tview.Pages
-	status       *tview.TextView
-	list         *tview.List
-	notifList    *tview.List
-	composeArea  *tview.TextArea
-	serverInput  *tview.InputField
-	waitingText  *tview.TextView
+	app         *tview.Application
+	pages       *tview.Pages
+	status      *tview.TextView
+	list        *tview.List
+	notifList   *tview.List
+	composeArea *tview.TextArea
+	serverInput *tview.InputField
+	waitingText *tview.TextView
 
-	client     *uwuzu.Client
-	cfg        config.Config
-	account    config.Account
-	server     string
-	session    string
-	authURL    string
-	posts      []core.Post
-	page       int
-	loading    bool
-	replyTo    string
-	notifs     []core.Notification
+	client  *uwuzu.Client
+	cfg     config.Config
+	account config.Account
+	server  string
+	session string
+	authURL string
+	posts   []core.Post
+	page    int
+	loading bool
+	replyTo string
+	notifs  []core.Notification
 )
 
 func Run() error {
@@ -113,6 +113,7 @@ func Run() error {
 		}
 	})
 
+	app.SetRoot(pages, true)
 	return app.Run()
 }
 
@@ -412,4 +413,3 @@ func centered(p tview.Primitive, width, height int) tview.Primitive {
 		AddItem(nil, 0, 1, false)
 	return flex
 }
-
