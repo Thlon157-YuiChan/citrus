@@ -123,7 +123,7 @@ func Run() error {
 				pages.SwitchToPage("notifications")
 			}
 			return nil
-		case 'p':
+		case 'c':
 			if client != nil {
 				replyTo = ""
 				composeArea.SetText("", true)
