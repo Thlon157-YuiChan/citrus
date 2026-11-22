@@ -3,6 +3,7 @@ package tui
 import (
 	"bytes"
 	"fmt"
+	_ "golang.org/x/image/webp"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
