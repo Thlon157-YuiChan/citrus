@@ -80,11 +80,6 @@ func Run() error {
 				loadTimeline()
 			}
 			return nil
-		case 'l':
-			if client != nil {
-				loadMore()
-			}
-			return nil
 		case 'n':
 			if client != nil {
 				loadNotifications()
@@ -197,7 +192,6 @@ func buildTimelinePage() {
 		{"Favorite", func() { favoriteSelected() }},
 		{"Delete", func() { deleteSelected() }},
 		{"Notifications", func() { loadNotifications(); pages.SwitchToPage("notifications") }},
-		{"Load more", func() { loadMore() }},
 		{"Refresh", func() { loadTimeline() }},
 		{"Quit", func() { app.Stop() }},
 	} {
