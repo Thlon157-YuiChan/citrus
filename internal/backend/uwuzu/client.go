@@ -80,11 +80,11 @@ type uwuzuUser struct {
 }
 
 type uwuzuPost struct {
-	Uniqid      string   `json:"uniqid"`
-	Relpyid     string   `json:"relpyid"`
-	Reuseid     string   `json:"reuseid"`
-	Text        string   `json:"text"`
-	Account     struct {
+	Uniqid  string `json:"uniqid"`
+	Relpyid string `json:"relpyid"`
+	Reuseid string `json:"reuseid"`
+	Text    string `json:"text"`
+	Account struct {
 		Username string `json:"username"`
 		UserID   string `json:"userid"`
 		UserIcon string `json:"user_icon"`

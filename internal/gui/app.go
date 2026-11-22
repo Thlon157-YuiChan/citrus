@@ -7,8 +7,8 @@ import (
 
 	"github.com/mappu/miqt/qt6"
 
-	"github.com/chihaya/citrus/internal/config"
 	"github.com/chihaya/citrus/internal/backend/uwuzu"
+	"github.com/chihaya/citrus/internal/config"
 )
 
 func Run() error {

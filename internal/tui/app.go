@@ -5,12 +5,12 @@ import (
 	"os/exec"
 	"strings"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/chihaya/citrus/internal/backend/uwuzu"
 	"github.com/chihaya/citrus/internal/config"
 	"github.com/chihaya/citrus/internal/core"
-	"github.com/chihaya/citrus/internal/backend/uwuzu"
 )
 
 type screen int
@@ -46,9 +46,9 @@ type model struct {
 	serverInput  textinput.Model
 	composeInput textinput.Model
 
-	server   string
-	session  string
-	authURL  string
+	server  string
+	session string
+	authURL string
 
 	client  *uwuzu.Client
 	account config.Account
@@ -81,10 +81,10 @@ func NewModel() model {
 
 	cfg, _ := config.Load()
 	m := model{
-		screen:        screenLogin,
-		serverInput:   si,
-		composeInput:  ci,
-		cfg:           cfg,
+		screen:       screenLogin,
+		serverInput:  si,
+		composeInput: ci,
+		cfg:          cfg,
 	}
 	if len(cfg.Accounts) > 0 && cfg.Active < len(cfg.Accounts) {
 		acc := cfg.Accounts[cfg.Active]
