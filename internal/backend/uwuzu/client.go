@@ -91,10 +91,10 @@ type uwuzuPost struct {
 		UserIcon string `json:"user_icon"`
 		IsBot    bool   `json:"is_bot"`
 	} `json:"account"`
-	Favorite    []string `json:"favorite"`
-	FavoriteCnt string   `json:"favorite_cnt"`
-	Datetime    string   `json:"datetime"`
-	NSFW        bool     `json:"nsfw"`
+	Favorite    []string    `json:"favorite"`
+	FavoriteCnt interface{} `json:"favorite_cnt"`
+	Datetime    string      `json:"datetime"`
+	NSFW        bool        `json:"nsfw"`
 }
 
 func parseTime(s string) time.Time {
@@ -103,7 +103,7 @@ func parseTime(s string) time.Time {
 }
 
 func toPost(p uwuzuPost) core.Post {
-	fc, _ := strconv.Atoi(p.FavoriteCnt)
+	fc, _ := strconv.Atoi(fmt.Sprint(p.FavoriteCnt))
 	return core.Post{
 		ID:            p.Uniqid,
 		Text:          p.Text,
