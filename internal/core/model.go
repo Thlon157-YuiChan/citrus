@@ -18,6 +18,7 @@ type Post struct {
 	Favorites     []string
 	FavoriteCount int
 	NSFW          bool
+	Images        []string
 }
 
 type Notification struct {

@@ -1,7 +1,14 @@
 package tui
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+	"io"
+	"net/http"
 	"os/exec"
 	"strings"
 
@@ -14,14 +21,16 @@ import (
 )
 
 var (
-	app         *tview.Application
-	pages       *tview.Pages
-	status      *tview.TextView
-	list        *tview.List
-	notifList   *tview.List
-	composeArea *tview.TextArea
-	serverInput *tview.InputField
-	waitingText *tview.TextView
+	app          *tview.Application
+	pages        *tview.Pages
+	status       *tview.TextView
+	list         *tview.List
+	notifList    *tview.List
+	composeArea  *tview.TextArea
+	detailText   *tview.TextView
+	detailImages *tview.Flex
+	serverInput  *tview.InputField
+	waitingText  *tview.TextView
 
 	client  *uwuzu.Client
 	cfg     config.Config
@@ -55,6 +64,7 @@ func Run() error {
 	buildWaitingPage()
 	buildTimelinePage()
 	buildComposePage()
+	buildDetailPage()
 	buildNotificationsPage()
 
 	if client != nil {
@@ -67,7 +77,7 @@ func Run() error {
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			front, _ := pages.GetFrontPage()
-			if front == "compose" {
+			if front == "compose" || front == "detail" {
 				composeArea.SetText("", true)
 				replyTo = ""
 				pages.SwitchToPage("timeline")
@@ -89,6 +99,16 @@ func Run() error {
 			app.Stop()
 			return nil
 		case 'r':
+			if client != nil && len(posts) > 0 {
+				idx := list.GetCurrentItem()
+				if idx >= 0 && idx < len(posts) {
+					replyTo = posts[idx].ID
+					composeArea.SetText("", true)
+					pages.SwitchToPage("compose")
+				}
+			}
+			return nil
+		case 'R':
 			if client != nil {
 				loadTimeline()
 			}
@@ -115,9 +135,7 @@ func Run() error {
 
 	list.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
 		if index >= 0 && index < len(posts) && client != nil {
-			replyTo = posts[index].ID
-			composeArea.SetText("", true)
-			pages.SwitchToPage("compose")
+			showDetail(posts[index])
 		}
 	})
 
@@ -368,6 +386,50 @@ func buildComposePage() {
 	flex.AddItem(btns, 3, 0, false)
 	flex.AddItem(status, 5, 0, false)
 	pages.AddPage("compose", flex, true, false)
+}
+
+func buildDetailPage() {
+	detailText = tview.NewTextView().SetDynamicColors(true).SetWrap(true)
+	detailText.SetBorder(true).SetTitle("Post detail")
+	detailImages = tview.NewFlex().SetDirection(tview.FlexColumn)
+	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
+		pages.SwitchToPage("timeline")
+	})
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
+	flex.AddItem(detailText, 0, 1, true)
+	flex.AddItem(detailImages, 20, 0, false)
+	flex.AddItem(backBtn, 3, 0, false)
+	flex.AddItem(status, 5, 0, false)
+	pages.AddPage("detail", flex, true, false)
+}
+
+func showDetail(p core.Post) {
+	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.Text))
+	detailImages.Clear()
+	for _, u := range p.Images {
+		imgView := tview.NewImage()
+		imgView.SetSize(40, 20)
+		detailImages.AddItem(imgView, 40, 0, false)
+		go func(url string, iv *tview.Image) {
+			resp, err := http.Get(url)
+			if err != nil {
+				return
+			}
+			defer resp.Body.Close()
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return
+			}
+			im, _, err := image.Decode(bytes.NewReader(data))
+			if err != nil {
+				return
+			}
+			app.QueueUpdateDraw(func() {
+				iv.SetImage(im)
+			})
+		}(u, imgView)
+	}
+	pages.SwitchToPage("detail")
 }
 
 func buildNotificationsPage() {

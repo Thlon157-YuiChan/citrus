@@ -95,6 +95,11 @@ type uwuzuPost struct {
 	FavoriteCnt interface{} `json:"favorite_cnt"`
 	Datetime    string      `json:"datetime"`
 	NSFW        bool        `json:"nsfw"`
+	Photo1      string      `json:"photo1"`
+	Photo2      string      `json:"photo2"`
+	Photo3      string      `json:"photo3"`
+	Photo4      string      `json:"photo4"`
+	Video1      string      `json:"video1"`
 }
 
 func parseTime(s string) time.Time {
@@ -104,6 +109,15 @@ func parseTime(s string) time.Time {
 
 func toPost(p uwuzuPost) core.Post {
 	fc, _ := strconv.Atoi(fmt.Sprint(p.FavoriteCnt))
+	imgs := []string{}
+	for _, u := range []string{p.Photo1, p.Photo2, p.Photo3, p.Photo4} {
+		if u != "" && u != "none" {
+			imgs = append(imgs, u)
+		}
+	}
+	if p.Video1 != "" && p.Video1 != "none" {
+		imgs = append(imgs, p.Video1)
+	}
 	return core.Post{
 		ID:            p.Uniqid,
 		Text:          p.Text,
@@ -114,6 +128,7 @@ func toPost(p uwuzuPost) core.Post {
 		Favorites:     p.Favorite,
 		FavoriteCount: fc,
 		NSFW:          p.NSFW,
+		Images:        imgs,
 	}
 }
 
