@@ -249,7 +249,16 @@ func loadMore() {
 				return
 			}
 			oldCount := len(posts)
-			posts = append(posts, ps...)
+			seen := make(map[string]bool)
+			for _, p := range posts {
+				seen[p.ID] = true
+			}
+			for _, p := range ps {
+				if !seen[p.ID] {
+					posts = append(posts, p)
+					seen[p.ID] = true
+				}
+			}
 			if len(ps) > 0 {
 				page++
 			}
