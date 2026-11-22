@@ -65,6 +65,19 @@ func Run() error {
 	}
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEsc {
+			front, _ := pages.GetFrontPage()
+			if front == "compose" {
+				composeArea.SetText("", true)
+				replyTo = ""
+				pages.SwitchToPage("timeline")
+				return nil
+			}
+			if front == "notifications" {
+				pages.SwitchToPage("timeline")
+				return nil
+			}
+		}
 		if _, ok := app.GetFocus().(*tview.InputField); ok {
 			return event
 		}
