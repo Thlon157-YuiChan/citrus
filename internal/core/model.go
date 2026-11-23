@@ -3,9 +3,22 @@ package core
 import "time"
 
 type User struct {
-	ID      string
-	Name    string
-	IconURL string
+	ID            string
+	Name          string
+	IconURL       string
+	HeaderURL     string
+	Profile       string
+	RegisteredAt  string
+	Followee      []string
+	FolloweeCount int
+	Follower      []string
+	FollowerCount int
+	UeuseCount    int
+	IsBot         bool
+	IsAdmin       bool
+	Role          string
+	OnlineStatus  string
+	Language      string
 }
 
 type Post struct {

@@ -241,31 +241,63 @@ func (c *Client) doJSON(method, path string, body interface{}, out interface{}) 
 	return nil
 }
 
+type uwuzuUserFull struct {
+	Username      string   `json:"username"`
+	UserID        string   `json:"userid"`
+	Profile       string   `json:"profile"`
+	UserIcon      string   `json:"user_icon"`
+	UserHeader    string   `json:"user_header"`
+	RegisteredDate string  `json:"registered_date"`
+	Followee      []string `json:"followee"`
+	FolloweeCnt   int      `json:"followee_cnt"`
+	Follower      []string `json:"follower"`
+	FollowerCnt   int      `json:"follower_cnt"`
+	UeuseCnt      int      `json:"ueuse_cnt"`
+	IsBot         bool     `json:"isBot"`
+	IsAdmin       bool     `json:"isAdmin"`
+	Role          []struct {
+		Name string `json:"name"`
+	} `json:"role"`
+	OnlineStatus  string   `json:"online_status"`
+	Language      string   `json:"language"`
+}
+
+func toUser(m uwuzuUserFull) core.User {
+	role := ""
+	if len(m.Role) > 0 {
+		role = m.Role[0].Name
+	}
+	return core.User{
+		ID:            m.UserID,
+		Name:          m.Username,
+		IconURL:       m.UserIcon,
+		HeaderURL:     m.UserHeader,
+		Profile:       m.Profile,
+		RegisteredAt:  m.RegisteredDate,
+		Followee:      m.Followee,
+		FolloweeCount: m.FolloweeCnt,
+		Follower:      m.Follower,
+		FollowerCount: m.FollowerCnt,
+		UeuseCount:    m.UeuseCnt,
+		IsBot:         m.IsBot,
+		IsAdmin:       m.IsAdmin,
+		Role:          role,
+		OnlineStatus:  m.OnlineStatus,
+		Language:      m.Language,
+	}
+}
+
 func (c *Client) Me() (core.User, error) {
-	var u struct {
-		Username string `json:"username"`
-		UserID   string `json:"userid"`
-		UserIcon string `json:"user_icon"`
-	}
-	if err := c.doJSON("GET", "/api/me/", map[string]string{"token": c.Token}, &u); err != nil {
-		// fallback query style
-	}
-	_ = u
-	// simpler: direct GET with query
 	resp, err := c.HTTP.Get(c.BaseURL + "/api/me/?token=" + url.QueryEscape(c.Token))
 	if err != nil {
 		return core.User{}, err
 	}
 	defer resp.Body.Close()
-	var m struct {
-		Username string `json:"username"`
-		UserID   string `json:"userid"`
-		UserIcon string `json:"user_icon"`
-	}
+	var m uwuzuUserFull
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
 		return core.User{}, err
 	}
-	return core.User{ID: m.UserID, Name: m.Username, IconURL: m.UserIcon}, nil
+	return toUser(m), nil
 }
 
 func (c *Client) HomeTimeline(limit, page int) ([]core.Post, error) {
@@ -347,15 +379,11 @@ func (c *Client) User(userID string) (core.User, error) {
 		return core.User{}, err
 	}
 	defer resp.Body.Close()
-	var m struct {
-		Username string `json:"username"`
-		UserID   string `json:"userid"`
-		UserIcon string `json:"user_icon"`
-	}
+	var m uwuzuUserFull
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
 		return core.User{}, err
 	}
-	return core.User{ID: m.UserID, Name: m.Username, IconURL: m.UserIcon}, nil
+	return toUser(m), nil
 }
 
 func (c *Client) CreatePost(text, replyTo, reuseTo string, nsfw bool) (core.Post, error) {

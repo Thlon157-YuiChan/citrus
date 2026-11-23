@@ -784,7 +784,7 @@ func loadUser(userID string) {
 				return
 			}
 			userProfile = u
-			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nIcon: %s", u.Name, u.ID, u.IconURL))
+			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nProfile: %s\nFollowee: %d  Follower: %d  Posts: %d\nOnline: %s  Role: %s", u.Name, u.ID, u.Profile, u.FolloweeCount, u.FollowerCount, u.UeuseCount, u.OnlineStatus, u.Role))
 			pages.SwitchToPage("user")
 		})
 	}()
