@@ -830,7 +830,6 @@ func loadUser(userID string) {
 	}()
 }
 
-
 func buildNotificationsPage() {
 	notifList = tview.NewList().ShowSecondaryText(true)
 	notifList.SetBorder(true).SetTitle("Notifications")

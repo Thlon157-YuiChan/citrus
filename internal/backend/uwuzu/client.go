@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -244,24 +244,24 @@ func (c *Client) doJSON(method, path string, body interface{}, out interface{}) 
 }
 
 type uwuzuUserFull struct {
-	Username      string   `json:"username"`
-	UserID        string   `json:"userid"`
-	Profile       string   `json:"profile"`
-	UserIcon      string   `json:"user_icon"`
-	UserHeader    string   `json:"user_header"`
-	RegisteredDate string  `json:"registered_date"`
-	Followee      []string `json:"followee"`
-	FolloweeCnt   int      `json:"followee_cnt"`
-	Follower      []string `json:"follower"`
-	FollowerCnt   int      `json:"follower_cnt"`
-	UeuseCnt      int      `json:"ueuse_cnt"`
-	IsBot         bool     `json:"isBot"`
-	IsAdmin       bool     `json:"isAdmin"`
-	Role          []struct {
+	Username       string   `json:"username"`
+	UserID         string   `json:"userid"`
+	Profile        string   `json:"profile"`
+	UserIcon       string   `json:"user_icon"`
+	UserHeader     string   `json:"user_header"`
+	RegisteredDate string   `json:"registered_date"`
+	Followee       []string `json:"followee"`
+	FolloweeCnt    int      `json:"followee_cnt"`
+	Follower       []string `json:"follower"`
+	FollowerCnt    int      `json:"follower_cnt"`
+	UeuseCnt       int      `json:"ueuse_cnt"`
+	IsBot          bool     `json:"isBot"`
+	IsAdmin        bool     `json:"isAdmin"`
+	Role           []struct {
 		Name string `json:"name"`
 	} `json:"role"`
-	OnlineStatus  string   `json:"online_status"`
-	Language      string   `json:"language"`
+	OnlineStatus string `json:"online_status"`
+	Language     string `json:"language"`
 }
 
 func toUser(m uwuzuUserFull) core.User {
