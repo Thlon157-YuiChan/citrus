@@ -96,6 +96,7 @@ func Run() error {
 			front, _ := pages.GetFrontPage()
 			if front == "compose" || front == "detail" {
 				composeArea.SetText("", true)
+				imageInput.SetText("")
 				replyTo = ""
 				pages.SwitchToPage("timeline")
 				return nil
@@ -593,6 +594,7 @@ func buildComposePage() {
 	composePostBtn = tview.NewButton("Post (F2/Ctrl+S)").SetSelectedFunc(submitCompose)
 	composeCancelBtn = tview.NewButton("Cancel").SetSelectedFunc(func() {
 		composeArea.SetText("", true)
+		imageInput.SetText("")
 		replyTo = ""
 		pages.SwitchToPage("timeline")
 	})
