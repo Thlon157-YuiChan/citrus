@@ -307,20 +307,14 @@ func Run() error {
 		}
 		front, _ := pages.GetFrontPage()
 		screen.Show()
+		if front != "detail" {
+			return
+		}
 		tty, ok := screen.Tty()
 		if !ok {
 			return
 		}
-		x, y, w, h := detailImages.GetRect()
-		if front != "detail" {
-			if w > 0 && h > 0 {
-				space := strings.Repeat(" ", w)
-				for row := 0; row < h; row++ {
-					fmt.Fprintf(tty, "\x1b[%d;%dH%s", y+1+row, x+1, space)
-				}
-			}
-			return
-		}
+		x, y, _, _ := detailImages.GetRect()
 		fmt.Fprintf(tty, "\x1b[%d;%dH%s", y+1, x+1, sixelData)
 	})
 	root := tview.NewFlex().SetDirection(tview.FlexRow)
