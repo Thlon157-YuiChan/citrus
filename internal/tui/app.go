@@ -635,7 +635,7 @@ func showDetail(p core.Post) {
 			}()
 		}
 	}
-	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, mdToTview(p.Text)))
+	detailText.SetText(fmt.Sprintf("%s (%s)  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.Author.ID, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, mdToTview(p.Text)))
 	detailReplies.Clear()
 	detailReplies.AddItem("Loading replies...", "", 0, nil)
 	go func(id string) {
