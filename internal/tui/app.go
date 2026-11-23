@@ -658,7 +658,7 @@ func buildDetailPage() {
 		pages.SwitchToPage("timeline")
 	})
 	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
-	detailFlex.AddItem(detailImages, 12, 0, false)
+	detailFlex.AddItem(detailImages, 20, 0, false)
 	detailFlex.AddItem(detailText, 0, 1, true)
 	detailFlex.AddItem(detailReplies, 4, 0, true)
 	flex := detailFlex
@@ -793,7 +793,7 @@ func showDetail(p core.Post) {
 	if len(p.Images) == 0 {
 		detailFlex.ResizeItem(detailImages, 0, 0)
 	} else {
-		detailFlex.ResizeItem(detailImages, 12, 0)
+		detailFlex.ResizeItem(detailImages, 20, 0)
 	}
 	detailImages.Clear()
 	if !sixelReady && len(p.Images) > 0 {
