@@ -150,6 +150,38 @@ func Run() error {
 				return nil
 			}
 		}
+		front, _ := pages.GetFrontPage()
+		if front != "login" && front != "compose" {
+			switch event.Key() {
+			case tcell.KeyLeft:
+				pages.SwitchToPage("timeline")
+				return nil
+			case tcell.KeyRight:
+				if front == "timeline" && len(posts) > 0 {
+					idx := list.GetCurrentItem()
+					if idx >= 0 && idx < len(posts) {
+						showDetail(posts[idx])
+					}
+					return nil
+				}
+				if front == "notifications" && len(notifs) > 0 {
+					if client != nil {
+						go func() {
+							_ = client.MarkNotificationsRead()
+							loadNotifications()
+						}()
+					}
+					return nil
+				}
+				if front == "detail" && detailReplies != nil {
+					idx := detailReplies.GetCurrentItem()
+					if idx >= 0 && idx < len(detailReplyPosts) {
+						showDetail(detailReplyPosts[idx])
+					}
+					return nil
+				}
+			}
+		}
 		if _, ok := app.GetFocus().(*tview.InputField); ok {
 			return event
 		}
