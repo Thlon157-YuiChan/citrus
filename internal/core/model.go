@@ -33,6 +33,8 @@ type Post struct {
 	ReplyCount    int
 	Repliers      []string
 	NSFW          bool
+	Abi           string
+	AbiDatetime   time.Time
 	Images        []string
 }
 

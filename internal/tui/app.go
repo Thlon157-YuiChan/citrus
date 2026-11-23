@@ -690,7 +690,11 @@ func showDetail(p core.Post) {
 			}()
 		}
 	}
-	detailText.SetText(fmt.Sprintf("%s (%s)  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.Author.ID, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, mdToTview(p.Text)))
+	text := mdToTview(p.Text)
+	if p.Abi != "" {
+		text += "\n\n追記: " + mdToTview(p.Abi)
+	}
+	detailText.SetText(fmt.Sprintf("%s (%s)  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.Author.ID, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, text))
 	detailReplies.Clear()
 	detailReplies.AddItem("Loading replies...", "", 0, nil)
 	go func(id string) {

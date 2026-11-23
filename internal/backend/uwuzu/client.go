@@ -98,6 +98,8 @@ type uwuzuPost struct {
 	ReplyCnt    interface{} `json:"reply_cnt"`
 	Datetime    string      `json:"datetime"`
 	NSFW        bool        `json:"nsfw"`
+	Abi         string      `json:"abi"`
+	AbiDatetime string      `json:"abidatetime"`
 	Photo1      string      `json:"photo1"`
 	Photo2      string      `json:"photo2"`
 	Photo3      string      `json:"photo3"`
@@ -113,6 +115,10 @@ func parseTime(s string) time.Time {
 func toPost(p uwuzuPost) core.Post {
 	fc, _ := strconv.Atoi(fmt.Sprint(p.FavoriteCnt))
 	rc, _ := strconv.Atoi(fmt.Sprint(p.ReplyCnt))
+	abi := ""
+	if p.Abi != "" && p.Abi != "none" {
+		abi = p.Abi
+	}
 	imgs := []string{}
 	for _, u := range []string{p.Photo1, p.Photo2, p.Photo3, p.Photo4} {
 		if u != "" && u != "none" {
@@ -133,6 +139,8 @@ func toPost(p uwuzuPost) core.Post {
 		FavoriteCount: fc,
 		ReplyCount:    rc,
 		NSFW:          p.NSFW,
+		Abi:           abi,
+		AbiDatetime:   parseTime(p.AbiDatetime),
 		Images:        imgs,
 	}
 }
