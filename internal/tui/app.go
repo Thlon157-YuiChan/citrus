@@ -63,6 +63,7 @@ var (
 )
 
 var termWidth int
+var cellW, cellH int
 
 func Run() error {
 	cfg, _ = config.Load()
@@ -298,10 +299,18 @@ func Run() error {
 	})
 
 	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
-		w, _ := screen.Size()
+		w, h := screen.Size()
 		if w > 0 {
 			termWidth = w
 		}
+		if tty, ok := screen.Tty(); ok {
+			if ws, err := tty.WindowSize(); err == nil {
+				if cw, ch := ws.CellDimensions(); cw > 0 && ch > 0 {
+					cellW, cellH = cw, ch
+				}
+			}
+		}
+		_ = h
 		return false
 	})
 	header := tview.NewTextView().SetText("Citrus on Terminal").SetDynamicColors(true)
@@ -712,7 +721,10 @@ func loadSixelImage(idx int) {
 			app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
 			return
 		}
-		im = scaleImage(im, 400, 400)
+		maxW, maxH := cellW*(termWidth-4), cellH*20
+		if maxW <= 0 { maxW = 400 }
+		if maxH <= 0 { maxH = 320 }
+		im = scaleImage(im, maxW, maxH)
 		var buf bytes.Buffer
 		buf.WriteString("\x1bPq")
 		enc := sixel.Encoder{}
@@ -781,7 +793,10 @@ func showDetail(p core.Post) {
 				app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
 				return
 			}
-			im = scaleImage(im, 400, 400)
+			maxW, maxH := cellW*(termWidth-4), cellH*20
+			if maxW <= 0 { maxW = 400 }
+			if maxH <= 0 { maxH = 320 }
+			im = scaleImage(im, maxW, maxH)
 			var buf bytes.Buffer
 			buf.WriteString("\x1bPq")
 			enc := sixel.Encoder{}
