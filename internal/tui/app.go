@@ -40,6 +40,7 @@ var (
 	detailReplies    *tview.List
 	detailReplyPosts []core.Post
 	userText         *tview.TextView
+	userScroll       int
 	userProfile      core.User
 	detailAuthorID   string
 	serverInput      *tview.InputField
@@ -214,6 +215,21 @@ func Run() error {
 			}
 			if front == "detail" && detailAuthorID != "" {
 				loadUser(detailAuthorID)
+			}
+		}
+		front2, _ := pages.GetFrontPage()
+		if front2 == "user" {
+			if event.Key() == tcell.KeyUp {
+				if userScroll > 0 {
+					userScroll--
+				}
+				userText.ScrollTo(userScroll, 0)
+				return nil
+			}
+			if event.Key() == tcell.KeyDown {
+				userScroll++
+				userText.ScrollTo(userScroll, 0)
+				return nil
 			}
 		}
 		if _, ok := app.GetFocus().(*tview.InputField); ok {
@@ -800,6 +816,7 @@ func loadUser(userID string) {
 			}
 			userProfile = u
 			sep := strings.Repeat("─", 40)
+			userScroll = 0
 			app.SetFocus(userText)
 			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nOnline: %s  Role: %s\n%s\nProfile:\n%s\n%s\nFollowee: %d  Follower: %d  Posts: %d", u.Name, u.ID, u.OnlineStatus, u.Role, sep, u.Profile, sep, u.FolloweeCount, u.FollowerCount, u.UeuseCount))
 			pages.SwitchToPage("user")
