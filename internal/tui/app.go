@@ -968,6 +968,11 @@ func buildNotificationsPage() {
 	notifList = tview.NewList().ShowSecondaryText(true)
 	notifList.SetBorder(true).SetTitle("Notifications")
 	notifList.SetWrapAround(false)
+	notifList.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		if index >= 0 && index < len(notifs) && client != nil {
+			loadUser(notifs[index].From.ID)
+		}
+	})
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
 		app.Sync()
