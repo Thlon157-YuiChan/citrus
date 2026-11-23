@@ -38,6 +38,9 @@ var (
 	detailFlex       *tview.Flex
 	detailReplies    *tview.List
 	detailReplyPosts []core.Post
+	userText         *tview.TextView
+	userProfile      core.User
+	detailAuthorID   string
 	serverInput      *tview.InputField
 	waitingText      *tview.TextView
 
@@ -76,6 +79,7 @@ func Run() error {
 	buildTimelinePage()
 	buildComposePage()
 	buildDetailPage()
+	buildUserPage()
 	buildNotificationsPage()
 
 	if client != nil {
@@ -193,6 +197,19 @@ func Run() error {
 				loadTimeline()
 			}
 			return nil
+		}
+		if event.Rune() == 'u' {
+			front, _ := pages.GetFrontPage()
+			if front == "timeline" && len(posts) > 0 {
+				idx := list.GetCurrentItem()
+				if idx >= 0 && idx < len(posts) {
+					loadUser(posts[idx].Author.ID)
+				}
+				return nil
+			}
+			if front == "detail" && detailAuthorID != "" {
+				loadUser(detailAuthorID)
+			}
 		}
 		if _, ok := app.GetFocus().(*tview.InputField); ok {
 			return event
@@ -586,6 +603,7 @@ func buildDetailPage() {
 }
 
 func showDetail(p core.Post) {
+	detailAuthorID = p.Author.ID
 	sixelShown := false
 	// Prioritize Sixel rendering when supported.
 	if len(p.Images) > 0 {
@@ -706,6 +724,72 @@ func showDetail(p core.Post) {
 	}
 	pages.SwitchToPage("detail")
 }
+
+func buildUserPage() {
+	userText = tview.NewTextView().SetDynamicColors(true).SetWrap(true)
+	userText.SetBorder(true).SetTitle("User")
+	followBtn := tview.NewButton("Follow").SetSelectedFunc(func() {
+		if client == nil || userProfile.ID == "" {
+			return
+		}
+		go func() {
+			err := client.Follow(userProfile.ID)
+			app.QueueUpdateDraw(func() {
+				if err != nil {
+					status.SetText("Follow failed: " + err.Error())
+				} else {
+					status.SetText("Followed " + userProfile.ID)
+				}
+			})
+		}()
+	})
+	unfollowBtn := tview.NewButton("Unfollow").SetSelectedFunc(func() {
+		if client == nil || userProfile.ID == "" {
+			return
+		}
+		go func() {
+			err := client.Unfollow(userProfile.ID)
+			app.QueueUpdateDraw(func() {
+				if err != nil {
+					status.SetText("Unfollow failed: " + err.Error())
+				} else {
+					status.SetText("Unfollowed " + userProfile.ID)
+				}
+			})
+		}()
+	})
+	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
+		pages.SwitchToPage("timeline")
+	})
+	btns := tview.NewFlex().SetDirection(tview.FlexColumn)
+	btns.AddItem(followBtn, 0, 1, false)
+	btns.AddItem(unfollowBtn, 0, 1, false)
+	btns.AddItem(backBtn, 0, 1, false)
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
+	flex.AddItem(userText, 0, 1, true)
+	flex.AddItem(btns, 3, 0, false)
+	flex.AddItem(status, 5, 0, false)
+	pages.AddPage("user", flex, true, false)
+}
+
+func loadUser(userID string) {
+	if client == nil || userID == "" {
+		return
+	}
+	go func() {
+		u, err := client.User(userID)
+		app.QueueUpdateDraw(func() {
+			if err != nil {
+				status.SetText("User load failed: " + err.Error())
+				return
+			}
+			userProfile = u
+			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nIcon: %s", u.Name, u.ID, u.IconURL))
+			pages.SwitchToPage("user")
+		})
+	}()
+}
+
 
 func buildNotificationsPage() {
 	notifList = tview.NewList().ShowSecondaryText(true)
