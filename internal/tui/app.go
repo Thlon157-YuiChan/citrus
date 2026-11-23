@@ -182,6 +182,18 @@ func Run() error {
 				}
 			}
 		}
+		if event.Key() == tcell.KeyF5 {
+			if client != nil {
+				loadTimeline()
+			}
+			return nil
+		}
+		if event.Rune() == 'r' && event.Modifiers()&tcell.ModCtrl != 0 {
+			if client != nil {
+				loadTimeline()
+			}
+			return nil
+		}
 		if _, ok := app.GetFocus().(*tview.InputField); ok {
 			return event
 		}
@@ -200,11 +212,6 @@ func Run() error {
 					composeArea.SetText("", true)
 					pages.SwitchToPage("compose")
 				}
-			}
-			return nil
-		case 'R':
-			if client != nil {
-				loadTimeline()
 			}
 			return nil
 		case 'n':
