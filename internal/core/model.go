@@ -17,6 +17,7 @@ type Post struct {
 	ReuseID       string
 	Favorites     []string
 	FavoriteCount int
+	ReplyCount    int
 	NSFW          bool
 	Images        []string
 }

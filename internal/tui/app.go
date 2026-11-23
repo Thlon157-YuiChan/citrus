@@ -35,6 +35,7 @@ var (
 	detailText       *tview.TextView
 	detailImages     *tview.Flex
 	detailFlex       *tview.Flex
+	detailReplies    *tview.TextView
 	serverInput      *tview.InputField
 	waitingText      *tview.TextView
 
@@ -296,7 +297,11 @@ func buildTimelinePage() {
 func refreshTimelineList() {
 	list.Clear()
 	for _, p := range posts {
-		list.AddItem(p.Author.Name+": "+strings.ReplaceAll(p.Text, "\n", " "), p.CreatedAt.Format("01-02 15:04"), 0, nil)
+		secondary := p.CreatedAt.Format("01-02 15:04")
+		if p.ReplyCount > 0 {
+			secondary = fmt.Sprintf("%s  replies:%d", secondary, p.ReplyCount)
+		}
+		list.AddItem(p.Author.Name+": "+strings.ReplaceAll(p.Text, "\n", " "), secondary, 0, nil)
 	}
 }
 
@@ -453,12 +458,15 @@ func buildDetailPage() {
 	detailText = tview.NewTextView().SetDynamicColors(true).SetWrap(true)
 	detailText.SetBorder(true).SetTitle("Post detail")
 	detailImages = tview.NewFlex().SetDirection(tview.FlexColumn)
+	detailReplies = tview.NewTextView().SetDynamicColors(true).SetWrap(true)
+	detailReplies.SetBorder(true).SetTitle("Replies")
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
 	})
 	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
 	detailFlex.AddItem(detailImages, 20, 0, false)
 	detailFlex.AddItem(detailText, 0, 1, true)
+	detailFlex.AddItem(detailReplies, 8, 0, false)
 	flex := detailFlex
 	flex.AddItem(backBtn, 3, 0, false)
 	flex.AddItem(status, 5, 0, false)
@@ -515,7 +523,32 @@ func showDetail(p core.Post) {
 			}()
 		}
 	}
-	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.Text))
+	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, p.Text))
+	detailReplies.SetText("Loading replies...")
+	go func(id string) {
+		replies, err := client.Replies(id, 25, 0)
+		app.QueueUpdateDraw(func() {
+			if err != nil {
+				detailReplies.SetText("Replies error: " + err.Error())
+				return
+			}
+			// replies[0] is original; skip
+			var b strings.Builder
+			count := 0
+			for i, r := range replies {
+				if i == 0 {
+					continue
+				}
+				count++
+				fmt.Fprintf(&b, "%s: %s  [%s]\n", r.Author.Name, strings.ReplaceAll(r.Text, "\n", " "), r.CreatedAt.Format("01-02 15:04"))
+			}
+			if count == 0 {
+				detailReplies.SetText("No replies.")
+			} else {
+				detailReplies.SetText(b.String())
+			}
+		})
+	}(p.ID)
 	if sixelShown || len(p.Images) == 0 {
 		detailFlex.ResizeItem(detailImages, 0, 0)
 	} else {
