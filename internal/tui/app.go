@@ -536,8 +536,10 @@ func buildDetailPage() {
 	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
 	detailFlex.AddItem(detailImages, 20, 0, false)
 	detailFlex.AddItem(detailText, 0, 1, true)
-	detailFlex.AddItem(detailReplies, 8, 0, false)
+	detailFlex.AddItem(detailReplies, 8, 0, true)
 	flex := detailFlex
+	help := tview.NewTextView().SetText("Enter: open reply detail  Esc: back")
+	flex.AddItem(help, 1, 0, false)
 	flex.AddItem(backBtn, 3, 0, false)
 	flex.AddItem(status, 5, 0, false)
 	pages.AddPage("detail", flex, true, false)
@@ -619,6 +621,9 @@ func showDetail(p core.Post) {
 			}
 			if count == 0 {
 				detailReplies.AddItem("No replies.", "", 0, nil)
+			}
+			if count > 0 {
+				app.SetFocus(detailReplies)
 			}
 		})
 	}(p.ID)
