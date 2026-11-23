@@ -784,7 +784,8 @@ func loadUser(userID string) {
 				return
 			}
 			userProfile = u
-			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nProfile: %s\nFollowee: %d  Follower: %d  Posts: %d\nOnline: %s  Role: %s", u.Name, u.ID, u.Profile, u.FolloweeCount, u.FollowerCount, u.UeuseCount, u.OnlineStatus, u.Role))
+			sep := strings.Repeat("─", 40)
+			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nOnline: %s  Role: %s\n%s\nProfile:\n%s\n%s\nFollowee: %d  Follower: %d  Posts: %d", u.Name, u.ID, u.OnlineStatus, u.Role, sep, u.Profile, sep, u.FolloweeCount, u.FollowerCount, u.UeuseCount))
 			pages.SwitchToPage("user")
 		})
 	}()
