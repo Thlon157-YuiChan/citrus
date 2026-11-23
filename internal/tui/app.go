@@ -24,17 +24,19 @@ import (
 )
 
 var (
-	app          *tview.Application
-	pages        *tview.Pages
-	status       *tview.TextView
-	list         *tview.List
-	notifList    *tview.List
-	composeArea  *tview.TextArea
-	detailText   *tview.TextView
-	detailImages *tview.Flex
-	detailFlex   *tview.Flex
-	serverInput  *tview.InputField
-	waitingText  *tview.TextView
+	app              *tview.Application
+	pages            *tview.Pages
+	status           *tview.TextView
+	list             *tview.List
+	notifList        *tview.List
+	composeArea      *tview.TextArea
+	composePostBtn   *tview.Button
+	composeCancelBtn *tview.Button
+	detailText       *tview.TextView
+	detailImages     *tview.Flex
+	detailFlex       *tview.Flex
+	serverInput      *tview.InputField
+	waitingText      *tview.TextView
 
 	client  *uwuzu.Client
 	cfg     config.Config
@@ -93,6 +95,50 @@ func Run() error {
 			}
 		}
 		if event.Key() == tcell.KeyEnter && event.Modifiers()&tcell.ModCtrl != 0 {
+			front, _ := pages.GetFrontPage()
+			if front == "compose" {
+				submitCompose()
+				return nil
+			}
+		}
+		if event.Key() == tcell.KeyTab {
+			front, _ := pages.GetFrontPage()
+			if front == "compose" {
+				cur := app.GetFocus()
+				switch cur {
+				case composeArea:
+					app.SetFocus(composePostBtn)
+				case composePostBtn:
+					app.SetFocus(composeCancelBtn)
+				default:
+					app.SetFocus(composeArea)
+				}
+				return nil
+			}
+		}
+		if event.Key() == tcell.KeyBacktab {
+			front, _ := pages.GetFrontPage()
+			if front == "compose" {
+				cur := app.GetFocus()
+				switch cur {
+				case composeCancelBtn:
+					app.SetFocus(composePostBtn)
+				case composePostBtn:
+					app.SetFocus(composeArea)
+				default:
+					app.SetFocus(composeCancelBtn)
+				}
+				return nil
+			}
+		}
+		if event.Key() == tcell.KeyF2 {
+			front, _ := pages.GetFrontPage()
+			if front == "compose" {
+				submitCompose()
+				return nil
+			}
+		}
+		if event.Rune() == 's' && event.Modifiers()&tcell.ModCtrl != 0 {
 			front, _ := pages.GetFrontPage()
 			if front == "compose" {
 				submitCompose()
@@ -385,15 +431,15 @@ func submitCompose() {
 func buildComposePage() {
 	composeArea = tview.NewTextArea()
 	composeArea.SetBorder(true).SetTitle("Compose")
-	postBtn := tview.NewButton("Post (Ctrl+Enter)").SetSelectedFunc(submitCompose)
-	cancelBtn := tview.NewButton("Cancel").SetSelectedFunc(func() {
+	composePostBtn = tview.NewButton("Post (Ctrl+Enter)").SetSelectedFunc(submitCompose)
+	composeCancelBtn = tview.NewButton("Cancel").SetSelectedFunc(func() {
 		composeArea.SetText("", true)
 		replyTo = ""
 		pages.SwitchToPage("timeline")
 	})
 	btns := tview.NewFlex().SetDirection(tview.FlexColumn)
-	btns.AddItem(postBtn, 0, 1, false)
-	btns.AddItem(cancelBtn, 0, 1, false)
+	btns.AddItem(composePostBtn, 0, 1, false)
+	btns.AddItem(composeCancelBtn, 0, 1, false)
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(composeArea, 0, 1, true)
 	flex.AddItem(btns, 3, 0, false)
