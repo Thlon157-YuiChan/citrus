@@ -603,7 +603,7 @@ func showDetail(p core.Post) {
 		app.QueueUpdateDraw(func() {
 			if err != nil {
 				detailReplies.Clear()
-				detailReplies.AddItem("Replies error: " + err.Error(), "", 0, nil)
+				detailReplies.AddItem("Replies error: "+err.Error(), "", 0, nil)
 				return
 			}
 			// replies[0] is original; skip
