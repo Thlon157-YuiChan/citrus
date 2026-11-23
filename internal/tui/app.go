@@ -516,7 +516,7 @@ func showDetail(p core.Post) {
 		}
 	}
 	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.Text))
-	if sixelShown {
+	if sixelShown || len(p.Images) == 0 {
 		detailFlex.ResizeItem(detailImages, 0, 0)
 	} else {
 		detailFlex.ResizeItem(detailImages, 20, 0)
