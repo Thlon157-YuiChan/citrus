@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi/sixel"
+	"golang.org/x/image/draw"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	"github.com/rivo/tview"
@@ -697,6 +698,7 @@ func loadSixelImage(idx int) {
 			app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
 			return
 		}
+		im = scaleImage(im, 400, 400)
 		var buf bytes.Buffer
 		buf.WriteString("\x1bPq")
 		enc := sixel.Encoder{}
@@ -711,6 +713,32 @@ func loadSixelImage(idx int) {
 			status.SetText(fmt.Sprintf("Image %d/%d (Sixel)", sixelIndex+1, len(sixelImages)))
 		})
 	}()
+}
+
+func scaleImage(img image.Image, maxW, maxH int) image.Image {
+	bounds := img.Bounds()
+	w, h := bounds.Dx(), bounds.Dy()
+	if w <= maxW && h <= maxH {
+		return img
+	}
+	scale := 1.0
+	if w > maxW {
+		scale = float64(maxW) / float64(w)
+	}
+	if float64(h)*scale > float64(maxH) {
+		scale = float64(maxH) / float64(h)
+	}
+	nw := int(float64(w) * scale)
+	nh := int(float64(h) * scale)
+	if nw < 1 {
+		nw = 1
+	}
+	if nh < 1 {
+		nh = 1
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, nw, nh))
+	draw.BiLinear.Scale(dst, dst.Bounds(), img, bounds, draw.Over, nil)
+	return dst
 }
 
 func showDetail(p core.Post) {
@@ -739,6 +767,7 @@ func showDetail(p core.Post) {
 				app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
 				return
 			}
+			im = scaleImage(im, 400, 400)
 			var buf bytes.Buffer
 			buf.WriteString("\x1bPq")
 			enc := sixel.Encoder{}
