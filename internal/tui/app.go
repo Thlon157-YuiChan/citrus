@@ -285,7 +285,7 @@ func Run() error {
 		}
 		return false
 	})
-	header := tview.NewTextView().SetText("Citrus").SetDynamicColors(true)
+	header := tview.NewTextView().SetText("Citrus on Terminal").SetDynamicColors(true)
 	root := tview.NewFlex().SetDirection(tview.FlexRow)
 	root.AddItem(header, 1, 0, false)
 	root.AddItem(pages, 0, 1, true)
