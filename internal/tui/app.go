@@ -350,6 +350,7 @@ func refreshTimelineList() {
 	for _, p := range posts {
 		text := strings.ReplaceAll(p.Text, "\n", " ")
 		text = runewidth.Truncate(text, mainWidth-len(p.Author.Name)-2, "...")
+		text = mdToTview(text)
 		secondary := p.CreatedAt.Format("01-02 15:04")
 		if p.ReplyCount > 0 {
 			if len(p.Repliers) > 0 {
@@ -627,7 +628,7 @@ func showDetail(p core.Post) {
 			}()
 		}
 	}
-	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, p.Text))
+	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, mdToTview(p.Text)))
 	detailReplies.Clear()
 	detailReplies.AddItem("Loading replies...", "", 0, nil)
 	go func(id string) {
@@ -649,6 +650,7 @@ func showDetail(p core.Post) {
 				count++
 				detailReplyPosts = append(detailReplyPosts, r)
 				text := runewidth.Truncate(strings.ReplaceAll(r.Text, "\n", " "), termWidth-10, "...")
+				text = mdToTview(text)
 				detailReplies.AddItem(r.Author.Name+": "+text, r.CreatedAt.Format("01-02 15:04"), 0, nil)
 			}
 			if count == 0 {
