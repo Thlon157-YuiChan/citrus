@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
 	"github.com/rivo/tview"
 
 	"github.com/chihaya/citrus/internal/backend/uwuzu"
@@ -51,6 +52,8 @@ var (
 	replyTo string
 	notifs  []core.Notification
 )
+
+var termWidth int
 
 func Run() error {
 	cfg, _ = config.Load()
@@ -197,6 +200,13 @@ func Run() error {
 		}
 	})
 
+	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		w, _ := screen.Size()
+		if w > 0 {
+			termWidth = w
+		}
+		return false
+	})
 	app.SetRoot(pages, true)
 	return app.Run()
 }
@@ -296,7 +306,17 @@ func buildTimelinePage() {
 
 func refreshTimelineList() {
 	list.Clear()
+	w := termWidth
+	if w <= 0 {
+		w = 80
+	}
+	mainWidth := w - 4
+	if mainWidth < 20 {
+		mainWidth = 20
+	}
 	for _, p := range posts {
+		text := strings.ReplaceAll(p.Text, "\n", " ")
+		text = runewidth.Truncate(text, mainWidth-len(p.Author.Name)-2, "...")
 		secondary := p.CreatedAt.Format("01-02 15:04")
 		if p.ReplyCount > 0 {
 			if len(p.Repliers) > 0 {
@@ -305,7 +325,8 @@ func refreshTimelineList() {
 				secondary = fmt.Sprintf("%s  replies:%d", secondary, p.ReplyCount)
 			}
 		}
-		list.AddItem(p.Author.Name+": "+strings.ReplaceAll(p.Text, "\n", " "), secondary, 0, nil)
+		secondary = runewidth.Truncate(secondary, w-2, "")
+		list.AddItem(p.Author.Name+": "+text, secondary, 0, nil)
 	}
 }
 
