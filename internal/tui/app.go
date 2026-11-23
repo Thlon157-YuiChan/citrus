@@ -299,7 +299,11 @@ func refreshTimelineList() {
 	for _, p := range posts {
 		secondary := p.CreatedAt.Format("01-02 15:04")
 		if p.ReplyCount > 0 {
-			secondary = fmt.Sprintf("%s  replies:%d", secondary, p.ReplyCount)
+			if len(p.Repliers) > 0 {
+				secondary = fmt.Sprintf("%s  replies:%d (%s)", secondary, p.ReplyCount, strings.Join(p.Repliers, ", "))
+			} else {
+				secondary = fmt.Sprintf("%s  replies:%d", secondary, p.ReplyCount)
+			}
 		}
 		list.AddItem(p.Author.Name+": "+strings.ReplaceAll(p.Text, "\n", " "), secondary, 0, nil)
 	}
@@ -323,8 +327,47 @@ func loadTimeline() {
 			page = 2
 			refreshTimelineList()
 			status.SetText(fmt.Sprintf("Loaded %d posts", len(posts)))
+			go enrichRepliers()
 		})
 	}()
+}
+
+func enrichRepliers() {
+	if client == nil {
+		return
+	}
+	for i := range posts {
+		if posts[i].ReplyCount <= 0 {
+			continue
+		}
+		idx := i
+		go func() {
+			replies, err := client.Replies(posts[idx].ID, 10, 0)
+			if err != nil {
+				return
+			}
+			seen := map[string]bool{}
+			var names []string
+			for j, r := range replies {
+				if j == 0 {
+					continue
+				}
+				if !seen[r.Author.Name] {
+					seen[r.Author.Name] = true
+					names = append(names, r.Author.Name)
+					if len(names) >= 3 {
+						break
+					}
+				}
+			}
+			app.QueueUpdateDraw(func() {
+				if idx < len(posts) {
+					posts[idx].Repliers = names
+					refreshTimelineList()
+				}
+			})
+		}()
+	}
 }
 
 func loadMore() {
