@@ -36,7 +36,8 @@ var (
 	detailText       *tview.TextView
 	detailImages     *tview.Flex
 	detailFlex       *tview.Flex
-	detailReplies    *tview.TextView
+	detailReplies    *tview.List
+	detailReplyPosts []core.Post
 	serverInput      *tview.InputField
 	waitingText      *tview.TextView
 
@@ -522,8 +523,13 @@ func buildDetailPage() {
 	detailText = tview.NewTextView().SetDynamicColors(true).SetWrap(true)
 	detailText.SetBorder(true).SetTitle("Post detail")
 	detailImages = tview.NewFlex().SetDirection(tview.FlexColumn)
-	detailReplies = tview.NewTextView().SetDynamicColors(true).SetWrap(true)
+	detailReplies = tview.NewList().ShowSecondaryText(true)
 	detailReplies.SetBorder(true).SetTitle("Replies")
+	detailReplies.SetSelectedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		if index >= 0 && index < len(detailReplyPosts) {
+			showDetail(detailReplyPosts[index])
+		}
+	})
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
 	})
@@ -588,28 +594,31 @@ func showDetail(p core.Post) {
 		}
 	}
 	detailText.SetText(fmt.Sprintf("%s  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, p.Text))
-	detailReplies.SetText("Loading replies...")
+	detailReplies.Clear()
+	detailReplies.AddItem("Loading replies...", "", 0, nil)
 	go func(id string) {
 		replies, err := client.Replies(id, 25, 0)
 		app.QueueUpdateDraw(func() {
 			if err != nil {
-				detailReplies.SetText("Replies error: " + err.Error())
+				detailReplies.Clear()
+				detailReplies.AddItem("Replies error: " + err.Error(), "", 0, nil)
 				return
 			}
 			// replies[0] is original; skip
-			var b strings.Builder
+			detailReplyPosts = []core.Post{}
+			detailReplies.Clear()
 			count := 0
 			for i, r := range replies {
 				if i == 0 {
 					continue
 				}
 				count++
-				fmt.Fprintf(&b, "%s: %s  [%s]\n", r.Author.Name, strings.ReplaceAll(r.Text, "\n", " "), r.CreatedAt.Format("01-02 15:04"))
+				detailReplyPosts = append(detailReplyPosts, r)
+				text := runewidth.Truncate(strings.ReplaceAll(r.Text, "\n", " "), termWidth-10, "...")
+				detailReplies.AddItem(r.Author.Name+": "+text, r.CreatedAt.Format("01-02 15:04"), 0, nil)
 			}
 			if count == 0 {
-				detailReplies.SetText("No replies.")
-			} else {
-				detailReplies.SetText(b.String())
+				detailReplies.AddItem("No replies.", "", 0, nil)
 			}
 		})
 	}(p.ID)
