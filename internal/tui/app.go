@@ -362,7 +362,7 @@ func buildWaitingPage() {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(waitingText, 0, 1, false)
 	flex.AddItem(fetchBtn, 3, 0, false)
-	flex.AddItem(status, 5, 0, false)
+	flex.AddItem(status, 3, 0, false)
 	pages.AddPage("waiting", flex, true, false)
 }
 
@@ -418,8 +418,8 @@ func buildTimelinePage() {
 	}
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(list, 0, 1, true)
-	flex.AddItem(btns, 3, 0, false)
-	flex.AddItem(status, 5, 0, false)
+	flex.AddItem(btns, 2, 0, false)
+	flex.AddItem(status, 3, 0, false)
 	pages.AddPage("timeline", flex, true, false)
 }
 
@@ -435,7 +435,7 @@ func refreshTimelineList() {
 	}
 	for _, p := range posts {
 		text := strings.ReplaceAll(p.Text, "\n", " ")
-		text = runewidth.Truncate(text, mainWidth-len(p.Author.Name)-2, "...")
+		text = runewidth.Truncate(text, mainWidth-runewidth.StringWidth(p.Author.Name)-2, "...")
 		text = mdToTview(text)
 		secondary := p.CreatedAt.Format("01-02 15:04")
 		if p.ReplyCount > 0 {
@@ -643,9 +643,9 @@ func buildComposePage() {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(composeArea, 0, 1, true)
 	flex.AddItem(imageInput, 3, 0, false)
-	flex.AddItem(btns, 3, 0, false)
+	flex.AddItem(btns, 2, 0, false)
 	flex.AddItem(help, 1, 0, false)
-	flex.AddItem(status, 5, 0, false)
+	flex.AddItem(status, 3, 0, false)
 	pages.AddPage("compose", flex, true, false)
 }
 
@@ -664,14 +664,14 @@ func buildDetailPage() {
 		pages.SwitchToPage("timeline")
 	})
 	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
-	detailFlex.AddItem(detailImages, 20, 0, false)
+	detailFlex.AddItem(detailImages, 12, 0, false)
 	detailFlex.AddItem(detailText, 0, 1, true)
-	detailFlex.AddItem(detailReplies, 8, 0, true)
+	detailFlex.AddItem(detailReplies, 4, 0, true)
 	flex := detailFlex
 	help := tview.NewTextView().SetText("Enter: open reply detail  Esc: back")
 	flex.AddItem(help, 1, 0, false)
-	flex.AddItem(backBtn, 3, 0, false)
-	flex.AddItem(status, 5, 0, false)
+	flex.AddItem(backBtn, 2, 0, false)
+	flex.AddItem(status, 3, 0, false)
 	pages.AddPage("detail", flex, true, false)
 }
 
@@ -799,7 +799,7 @@ func showDetail(p core.Post) {
 	if len(p.Images) == 0 {
 		detailFlex.ResizeItem(detailImages, 0, 0)
 	} else {
-		detailFlex.ResizeItem(detailImages, 20, 0)
+		detailFlex.ResizeItem(detailImages, 12, 0)
 	}
 	detailImages.Clear()
 	if !sixelReady && len(p.Images) > 0 {
@@ -914,8 +914,8 @@ func buildUserPage() {
 	btns.AddItem(backBtn, 0, 1, false)
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(userText, 0, 1, true)
-	flex.AddItem(btns, 3, 0, false)
-	flex.AddItem(status, 5, 0, false)
+	flex.AddItem(btns, 2, 0, false)
+	flex.AddItem(status, 3, 0, false)
 	pages.AddPage("user", flex, true, false)
 }
 
@@ -961,8 +961,8 @@ func buildNotificationsPage() {
 	btns.AddItem(markBtn, 0, 1, false)
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(notifList, 0, 1, true)
-	flex.AddItem(btns, 3, 0, false)
-	flex.AddItem(status, 5, 0, false)
+	flex.AddItem(btns, 2, 0, false)
+	flex.AddItem(status, 3, 0, false)
 	pages.AddPage("notifications", flex, true, false)
 }
 
