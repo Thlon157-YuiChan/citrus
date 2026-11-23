@@ -89,6 +89,7 @@ func Run() error {
 
 	if client != nil {
 		pages.SwitchToPage("timeline")
+		app.Sync()
 		go loadTimeline()
 	} else {
 		pages.SwitchToPage("login")
@@ -102,10 +103,12 @@ func Run() error {
 				imageInput.SetText("")
 				replyTo = ""
 				pages.SwitchToPage("timeline")
+		app.Sync()
 				return nil
 			}
 			if front == "notifications" {
 				pages.SwitchToPage("timeline")
+		app.Sync()
 				return nil
 			}
 		}
@@ -169,6 +172,7 @@ func Run() error {
 			switch event.Key() {
 			case tcell.KeyLeft:
 				pages.SwitchToPage("timeline")
+		app.Sync()
 				return nil
 			case tcell.KeyRight:
 				if front == "timeline" && len(posts) > 0 {
@@ -385,6 +389,7 @@ func fetchToken() {
 	app.QueueUpdateDraw(func() {
 		status.SetText("Logged in as " + tr.UserID)
 		pages.SwitchToPage("timeline")
+		app.Sync()
 		loadTimeline()
 	})
 }
@@ -619,6 +624,7 @@ func submitCompose() {
 			composeArea.SetText("", true)
 			replyTo = ""
 			pages.SwitchToPage("timeline")
+		app.Sync()
 			loadTimeline()
 		})
 	}()
@@ -633,6 +639,7 @@ func buildComposePage() {
 		imageInput.SetText("")
 		replyTo = ""
 		pages.SwitchToPage("timeline")
+		app.Sync()
 	})
 	imageInput = tview.NewInputField().SetLabel("Images: ").SetFieldWidth(60)
 	imageInput.SetPlaceholder("Image paths (comma separated)")
@@ -662,6 +669,7 @@ func buildDetailPage() {
 	})
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
+		app.Sync()
 	})
 	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
 	detailFlex.AddItem(detailImages, 20, 0, false)
@@ -907,6 +915,7 @@ func buildUserPage() {
 	})
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
+		app.Sync()
 	})
 	btns := tview.NewFlex().SetDirection(tview.FlexColumn)
 	btns.AddItem(followBtn, 0, 1, false)
@@ -946,6 +955,7 @@ func buildNotificationsPage() {
 	notifList.SetWrapAround(false)
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
+		app.Sync()
 	})
 	markBtn := tview.NewButton("Mark read").SetSelectedFunc(func() {
 		if client == nil {
