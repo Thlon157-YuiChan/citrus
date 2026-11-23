@@ -445,7 +445,7 @@ func showDetail(p core.Post) {
 				tmp.Close()
 				path := tmp.Name()
 				app.Suspend(func() {
-					cmd := exec.Command("img2sixel", "-w", "80%", path)
+					cmd := exec.Command("img2sixel", "-w", "80%", "-h", "80%", path)
 					cmd.Stdout = os.Stdout
 					cmd.Stderr = os.Stderr
 					_ = cmd.Run()
