@@ -741,7 +741,7 @@ func showDetail(p core.Post) {
 }
 
 func buildUserPage() {
-	userText = tview.NewTextView().SetDynamicColors(true).SetWrap(true)
+	userText = tview.NewTextView().SetDynamicColors(true).SetWrap(true).SetScrollable(true)
 	userText.SetBorder(true).SetTitle("User")
 	followBtn := tview.NewButton("Follow").SetSelectedFunc(func() {
 		if client == nil || userProfile.ID == "" {
@@ -800,6 +800,7 @@ func loadUser(userID string) {
 			}
 			userProfile = u
 			sep := strings.Repeat("─", 40)
+			app.SetFocus(userText)
 			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nOnline: %s  Role: %s\n%s\nProfile:\n%s\n%s\nFollowee: %d  Follower: %d  Posts: %d", u.Name, u.ID, u.OnlineStatus, u.Role, sep, u.Profile, sep, u.FolloweeCount, u.FollowerCount, u.UeuseCount))
 			pages.SwitchToPage("user")
 		})
