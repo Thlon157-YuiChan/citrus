@@ -285,7 +285,11 @@ func Run() error {
 		}
 		return false
 	})
-	app.SetRoot(pages, true)
+	header := tview.NewTextView().SetText("Citrus").SetDynamicColors(true)
+	root := tview.NewFlex().SetDirection(tview.FlexRow)
+	root.AddItem(header, 1, 0, false)
+	root.AddItem(pages, 0, 1, true)
+	app.SetRoot(root, true)
 	return app.Run()
 }
 
