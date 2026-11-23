@@ -92,6 +92,13 @@ func Run() error {
 				return nil
 			}
 		}
+		if event.Key() == tcell.KeyEnter && event.Modifiers()&tcell.ModCtrl != 0 {
+			front, _ := pages.GetFrontPage()
+			if front == "compose" {
+				submitCompose()
+				return nil
+			}
+		}
 		if _, ok := app.GetFocus().(*tview.InputField); ok {
 			return event
 		}
@@ -351,32 +358,34 @@ func deleteSelected() {
 	}()
 }
 
+func submitCompose() {
+	if client == nil {
+		return
+	}
+	text := strings.TrimSpace(composeArea.GetText())
+	if text == "" {
+		return
+	}
+	status.SetText("Posting...")
+	go func() {
+		_, err := client.CreatePost(text, replyTo, "", false)
+		app.QueueUpdateDraw(func() {
+			if err != nil {
+				status.SetText("Post failed: " + err.Error())
+				return
+			}
+			composeArea.SetText("", true)
+			replyTo = ""
+			pages.SwitchToPage("timeline")
+			loadTimeline()
+		})
+	}()
+}
+
 func buildComposePage() {
 	composeArea = tview.NewTextArea()
 	composeArea.SetBorder(true).SetTitle("Compose")
-	postBtn := tview.NewButton("Post").SetSelectedFunc(func() {
-		if client == nil {
-			return
-		}
-		text := strings.TrimSpace(composeArea.GetText())
-		if text == "" {
-			return
-		}
-		status.SetText("Posting...")
-		go func() {
-			_, err := client.CreatePost(text, replyTo, "", false)
-			app.QueueUpdateDraw(func() {
-				if err != nil {
-					status.SetText("Post failed: " + err.Error())
-					return
-				}
-				composeArea.SetText("", true)
-				replyTo = ""
-				pages.SwitchToPage("timeline")
-				loadTimeline()
-			})
-		}()
-	})
+	postBtn := tview.NewButton("Post (Ctrl+Enter)").SetSelectedFunc(submitCompose)
 	cancelBtn := tview.NewButton("Cancel").SetSelectedFunc(func() {
 		composeArea.SetText("", true)
 		replyTo = ""
