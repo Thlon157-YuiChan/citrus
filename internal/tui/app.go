@@ -738,7 +738,7 @@ func loadNotifications() {
 			notifs = items
 			notifList.Clear()
 			for _, n := range notifs {
-				notifList.AddItem(n.From.Name+": "+n.Title, n.Text, 0, nil)
+				notifList.AddItem(n.From.Name+": "+n.Title, n.CreatedAt.Format("01-02 15:04")+"  "+n.Text, 0, nil)
 			}
 			status.SetText(fmt.Sprintf("Loaded %d notifications", len(notifs)))
 		})
