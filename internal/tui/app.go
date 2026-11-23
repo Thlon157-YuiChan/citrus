@@ -431,7 +431,7 @@ func submitCompose() {
 func buildComposePage() {
 	composeArea = tview.NewTextArea()
 	composeArea.SetBorder(true).SetTitle("Compose")
-	composePostBtn = tview.NewButton("Post (Ctrl+Enter)").SetSelectedFunc(submitCompose)
+	composePostBtn = tview.NewButton("Post (F2/Ctrl+S)").SetSelectedFunc(submitCompose)
 	composeCancelBtn = tview.NewButton("Cancel").SetSelectedFunc(func() {
 		composeArea.SetText("", true)
 		replyTo = ""
@@ -440,9 +440,11 @@ func buildComposePage() {
 	btns := tview.NewFlex().SetDirection(tview.FlexColumn)
 	btns.AddItem(composePostBtn, 0, 1, false)
 	btns.AddItem(composeCancelBtn, 0, 1, false)
+	help := tview.NewTextView().SetText("Tab: move focus  Enter: newline  F2/Ctrl+S: post  Esc: cancel")
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(composeArea, 0, 1, true)
 	flex.AddItem(btns, 3, 0, false)
+	flex.AddItem(help, 1, 0, false)
 	flex.AddItem(status, 5, 0, false)
 	pages.AddPage("compose", flex, true, false)
 }
