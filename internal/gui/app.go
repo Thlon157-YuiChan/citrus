@@ -40,6 +40,9 @@ func Run() error {
 	composeEdit.SetPlaceholderText("What's on your mind?")
 	layout.AddWidget(composeEdit.QWidget)
 
+	attachBtn := qt6.NewQPushButton3("Attach images")
+	layout.AddWidget(attachBtn.QWidget)
+
 	postBtn := qt6.NewQPushButton3("Post")
 	layout.AddWidget(postBtn.QWidget)
 
@@ -49,6 +52,7 @@ func Run() error {
 	var client *uwuzu.Client
 	var session string
 	var server string
+	var imagePaths []string
 
 	authBtn.OnClicked(func() {
 		server = normalizeServerGUI(serverEdit.Text())
@@ -93,13 +97,25 @@ func Run() error {
 		if text == "" {
 			return
 		}
-		_, err := client.CreatePost(text, "", "", false)
+		_, err := client.CreatePost(text, "", "", false, imagePaths)
 		if err != nil {
 			statusLabel.SetText("Post failed: " + err.Error())
 			return
 		}
 		composeEdit.Clear()
+		imagePaths = nil
+		statusLabel.SetText("Posted")
 		loadTimelineGUI(client, timeline)
+	})
+
+	attachBtn.OnClicked(func() {
+		dialog := qt6.NewQFileDialog3()
+		dialog.SetFileMode(qt6.QFileDialog__ExistingFiles)
+		dialog.SetNameFilter("Images (*.png *.jpg *.jpeg *.gif *.webp)")
+		if dialog.Exec() != 0 {
+			imagePaths = dialog.SelectedFiles()
+			statusLabel.SetText(fmt.Sprintf("Attached %d images", len(imagePaths)))
+		}
 	})
 
 	// load existing account

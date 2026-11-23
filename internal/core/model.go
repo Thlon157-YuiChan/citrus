@@ -54,7 +54,7 @@ type TimelineBackend interface {
 }
 
 type SocialBackend interface {
-	CreatePost(text, replyTo, reuseTo string, nsfw bool) (Post, error)
+	CreatePost(text, replyTo, reuseTo string, nsfw bool, imagePaths []string) (Post, error)
 	DeletePost(postID string) error
 	Favorite(postID string) error
 	Unfavorite(postID string) error

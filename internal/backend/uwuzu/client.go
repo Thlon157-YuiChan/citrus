@@ -1,10 +1,12 @@
 package uwuzu
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"net/url"
 	"strconv"
 	"strings"
@@ -386,7 +388,7 @@ func (c *Client) User(userID string) (core.User, error) {
 	return toUser(m), nil
 }
 
-func (c *Client) CreatePost(text, replyTo, reuseTo string, nsfw bool) (core.Post, error) {
+func (c *Client) CreatePost(text, replyTo, reuseTo string, nsfw bool, imagePaths []string) (core.Post, error) {
 	body := map[string]interface{}{
 		"token": c.Token,
 		"text":  text,
@@ -398,6 +400,16 @@ func (c *Client) CreatePost(text, replyTo, reuseTo string, nsfw bool) (core.Post
 		body["reuseid"] = reuseTo
 	}
 	body["nsfw"] = nsfw
+	for i, path := range imagePaths {
+		if i >= 4 {
+			break
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return core.Post{}, err
+		}
+		body["image"+strconv.Itoa(i+1)] = base64.StdEncoding.EncodeToString(data)
+	}
 	b, _ := json.Marshal(body)
 	resp, err := c.HTTP.Post(c.BaseURL+"/api/ueuse/create", "application/json", strings.NewReader(string(b)))
 	if err != nil {

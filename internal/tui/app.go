@@ -31,6 +31,7 @@ var (
 	list             *tview.List
 	notifList        *tview.List
 	composeArea      *tview.TextArea
+	imageInput       *tview.InputField
 	composePostBtn   *tview.Button
 	composeCancelBtn *tview.Button
 	detailText       *tview.TextView
@@ -116,6 +117,8 @@ func Run() error {
 				cur := app.GetFocus()
 				switch cur {
 				case composeArea:
+					app.SetFocus(imageInput)
+				case imageInput:
 					app.SetFocus(composePostBtn)
 				case composePostBtn:
 					app.SetFocus(composeCancelBtn)
@@ -133,6 +136,8 @@ func Run() error {
 				case composeCancelBtn:
 					app.SetFocus(composePostBtn)
 				case composePostBtn:
+					app.SetFocus(imageInput)
+				case imageInput:
 					app.SetFocus(composeArea)
 				default:
 					app.SetFocus(composeCancelBtn)
@@ -539,9 +544,16 @@ func submitCompose() {
 	if text == "" {
 		return
 	}
+	var imagePaths []string
+	for _, p := range strings.Split(imageInput.GetText(), ",") {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			imagePaths = append(imagePaths, p)
+		}
+	}
 	status.SetText("Posting...")
 	go func() {
-		_, err := client.CreatePost(text, replyTo, "", false)
+		_, err := client.CreatePost(text, replyTo, "", false, imagePaths)
 		app.QueueUpdateDraw(func() {
 			if err != nil {
 				status.SetText("Post failed: " + err.Error())
@@ -564,12 +576,15 @@ func buildComposePage() {
 		replyTo = ""
 		pages.SwitchToPage("timeline")
 	})
+	imageInput = tview.NewInputField().SetLabel("Images: ").SetFieldWidth(60)
+	imageInput.SetPlaceholder("Image paths (comma separated)")
 	btns := tview.NewFlex().SetDirection(tview.FlexColumn)
 	btns.AddItem(composePostBtn, 0, 1, false)
 	btns.AddItem(composeCancelBtn, 0, 1, false)
 	help := tview.NewTextView().SetText("Tab: move focus  Enter: newline  F2/Ctrl+S: post  Esc: cancel")
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(composeArea, 0, 1, true)
+	flex.AddItem(imageInput, 3, 0, false)
 	flex.AddItem(btns, 3, 0, false)
 	flex.AddItem(help, 1, 0, false)
 	flex.AddItem(status, 5, 0, false)
