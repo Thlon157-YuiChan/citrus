@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	reBold      = regexp.MustCompile(`\*\*(.+?)\*\*`)
-	reBoldU     = regexp.MustCompile(`__(.+?)__`)
-	reStrike    = regexp.MustCompile(`~~(.+?)~~`)
-	reItalic    = regexp.MustCompile(`\*(.+?)\*`)
-	reItalicU   = regexp.MustCompile(`_(.+?)_`)
+	reBold    = regexp.MustCompile(`\*\*(.+?)\*\*`)
+	reBoldU   = regexp.MustCompile(`__(.+?)__`)
+	reStrike  = regexp.MustCompile(`~~(.+?)~~`)
+	reItalic  = regexp.MustCompile(`\*(.+?)\*`)
+	reItalicU = regexp.MustCompile(`_(.+?)_`)
 )
 
 func mdToTview(s string) string {
