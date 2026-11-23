@@ -308,6 +308,7 @@ func Run() error {
 		if front != "detail" {
 			return
 		}
+		screen.Show()
 		tty, ok := screen.Tty()
 		if !ok {
 			return
