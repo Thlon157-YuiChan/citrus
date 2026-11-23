@@ -475,13 +475,30 @@ func (c *Client) Notifications(limit, page int) ([]core.Notification, error) {
 	if err := json.NewDecoder(resp.Body).Decode(&raw); err != nil {
 		return nil, err
 	}
-	var out []core.Notification
-	for k, v := range raw {
+	var keys []string
+	for k := range raw {
 		if k == "success" {
 			continue
 		}
+		keys = append(keys, k)
+	}
+	// sort numerically
+	for i := 1; i < len(keys); i++ {
+		j := i
+		for j > 0 {
+			a, _ := strconv.Atoi(keys[j-1])
+			b, _ := strconv.Atoi(keys[j])
+			if a <= b {
+				break
+			}
+			keys[j-1], keys[j] = keys[j], keys[j-1]
+			j--
+		}
+	}
+	var out []core.Notification
+	for _, k := range keys {
 		var n uwuzuNotif
-		if err := json.Unmarshal(v, &n); err != nil {
+		if err := json.Unmarshal(raw[k], &n); err != nil {
 			continue
 		}
 		out = append(out, core.Notification{
