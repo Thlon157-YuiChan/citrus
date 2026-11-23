@@ -13,10 +13,10 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/x/ansi/sixel"
-	"golang.org/x/image/draw"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	"github.com/rivo/tview"
+	"golang.org/x/image/draw"
 
 	"github.com/chihaya/citrus/internal/backend/uwuzu"
 	"github.com/chihaya/citrus/internal/config"
@@ -306,15 +306,21 @@ func Run() error {
 			return
 		}
 		front, _ := pages.GetFrontPage()
-		if front != "detail" {
-			return
-		}
 		screen.Show()
 		tty, ok := screen.Tty()
 		if !ok {
 			return
 		}
-		x, y, _, _ := detailImages.GetRect()
+		x, y, w, h := detailImages.GetRect()
+		if front != "detail" {
+			if w > 0 && h > 0 {
+				space := strings.Repeat(" ", w)
+				for row := 0; row < h; row++ {
+					fmt.Fprintf(tty, "\x1b[%d;%dH%s", y+1+row, x+1, space)
+				}
+			}
+			return
+		}
 		fmt.Fprintf(tty, "\x1b[%d;%dH%s", y+1, x+1, sixelData)
 	})
 	root := tview.NewFlex().SetDirection(tview.FlexRow)
