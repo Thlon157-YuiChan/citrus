@@ -90,10 +90,12 @@ func Run() error {
 
 	if client != nil {
 		pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 		go loadTimeline()
 	} else {
 		pages.SwitchToPage("login")
+	app.Sync()
 	}
 
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -104,11 +106,13 @@ func Run() error {
 				imageInput.SetText("")
 				replyTo = ""
 				pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 				return nil
 			}
 			if front == "notifications" {
 				pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 				return nil
 			}
@@ -173,6 +177,7 @@ func Run() error {
 			switch event.Key() {
 			case tcell.KeyLeft:
 				pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 				return nil
 			case tcell.KeyRight:
@@ -269,6 +274,7 @@ func Run() error {
 					replyTo = posts[idx].ID
 					composeArea.SetText("", true)
 					pages.SwitchToPage("compose")
+	app.Sync()
 				}
 			}
 			return nil
@@ -276,6 +282,7 @@ func Run() error {
 			if client != nil {
 				loadNotifications()
 				pages.SwitchToPage("notifications")
+	app.Sync()
 			}
 			return nil
 		case 'c':
@@ -283,6 +290,7 @@ func Run() error {
 				replyTo = ""
 				composeArea.SetText("", true)
 				pages.SwitchToPage("compose")
+	app.Sync()
 			}
 			return nil
 		}
@@ -360,6 +368,7 @@ func buildLoginPage() {
 		status.SetText("Opening browser. Approve, then fetch token.")
 		_ = exec.Command("xdg-open", authURL).Start()
 		pages.SwitchToPage("waiting")
+	app.Sync()
 		waitingText.SetText(authURL)
 	})
 	form.SetBorder(true).SetTitle("Citrus Login")
@@ -398,6 +407,7 @@ func fetchToken() {
 	app.QueueUpdateDraw(func() {
 		status.SetText("Logged in as " + tr.UserID)
 		pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 		loadTimeline()
 	})
@@ -420,10 +430,12 @@ func buildTimelinePage() {
 		label string
 		fn    func()
 	}{
-		{"Compose", func() { replyTo = ""; composeArea.SetText("", true); pages.SwitchToPage("compose") }},
+		{"Compose", func() { replyTo = ""; composeArea.SetText("", true); pages.SwitchToPage("compose")
+	app.Sync() }},
 		{"Favorite", func() { favoriteSelected() }},
 		{"Delete", func() { deleteSelected() }},
-		{"Notifications", func() { loadNotifications(); pages.SwitchToPage("notifications") }},
+		{"Notifications", func() { loadNotifications(); pages.SwitchToPage("notifications")
+	app.Sync() }},
 		{"Refresh", func() { loadTimeline() }},
 		{"Quit", func() { app.Stop() }},
 	} {
@@ -633,6 +645,7 @@ func submitCompose() {
 			composeArea.SetText("", true)
 			replyTo = ""
 			pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 			loadTimeline()
 		})
@@ -648,6 +661,7 @@ func buildComposePage() {
 		imageInput.SetText("")
 		replyTo = ""
 		pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 	})
 	imageInput = tview.NewInputField().SetLabel("Images: ").SetFieldWidth(60)
@@ -678,6 +692,7 @@ func buildDetailPage() {
 	})
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 	})
 	detailFlex = tview.NewFlex().SetDirection(tview.FlexRow)
@@ -893,6 +908,7 @@ func showDetail(p core.Post) {
 	// (registered globally; store current images already in sixelImages)
 
 	pages.SwitchToPage("detail")
+	app.Sync()
 }
 
 func buildUserPage() {
@@ -930,6 +946,7 @@ func buildUserPage() {
 	})
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 	})
 	btns := tview.NewFlex().SetDirection(tview.FlexColumn)
@@ -960,6 +977,7 @@ func loadUser(userID string) {
 			sep := strings.Repeat("─", 40)
 			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nOnline: %s  Role: %s\n%s\nProfile:\n%s\n%s\nFollowee: %d  Follower: %d  Posts: %d", u.Name, u.ID, u.OnlineStatus, u.Role, sep, u.Profile, sep, u.FolloweeCount, u.FollowerCount, u.UeuseCount))
 			pages.SwitchToPage("user")
+	app.Sync()
 		})
 	}()
 }
@@ -975,6 +993,7 @@ func buildNotificationsPage() {
 	})
 	backBtn := tview.NewButton("Back").SetSelectedFunc(func() {
 		pages.SwitchToPage("timeline")
+	app.Sync()
 		app.Sync()
 	})
 	markBtn := tview.NewButton("Mark read").SetSelectedFunc(func() {
