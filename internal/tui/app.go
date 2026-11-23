@@ -1,20 +1,18 @@
 package tui
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	_ "golang.org/x/image/webp"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
-	"image/png"
 	"io"
 	"net/http"
-	"os"
 	"os/exec"
 	"strings"
 
+	"github.com/charmbracelet/x/ansi/sixel"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	"github.com/rivo/tview"
@@ -39,6 +37,10 @@ var (
 	detailFlex       *tview.Flex
 	detailReplies    *tview.List
 	detailReplyPosts []core.Post
+	sixelData        string
+	sixelReady       bool
+	sixelIndex       int
+	sixelImages      []string
 	userText         *tview.TextView
 	userScroll       int
 	userProfile      core.User
@@ -233,6 +235,17 @@ func Run() error {
 				return nil
 			}
 		}
+		front, _ = pages.GetFrontPage()
+		if front == "detail" {
+			if event.Rune() == 'n' {
+				loadSixelImage(sixelIndex + 1)
+				return nil
+			}
+			if event.Rune() == 'p' {
+				loadSixelImage(sixelIndex - 1)
+				return nil
+			}
+		}
 		if _, ok := app.GetFocus().(*tview.InputField); ok {
 			return event
 		}
@@ -287,6 +300,21 @@ func Run() error {
 		return false
 	})
 	header := tview.NewTextView().SetText("Citrus on Terminal").SetDynamicColors(true)
+	app.SetAfterDrawFunc(func(screen tcell.Screen) {
+		if !sixelReady {
+			return
+		}
+		front, _ := pages.GetFrontPage()
+		if front != "detail" {
+			return
+		}
+		tty, ok := screen.Tty()
+		if !ok {
+			return
+		}
+		x, y, _, _ := detailImages.GetRect()
+		fmt.Fprintf(tty, "\x1b[%d;%dH%s", y+1, x+1, sixelData)
+	})
 	root := tview.NewFlex().SetDirection(tview.FlexRow)
 	root.AddItem(header, 1, 0, false)
 	root.AddItem(pages, 0, 1, true)
@@ -639,101 +667,106 @@ func buildDetailPage() {
 	pages.AddPage("detail", flex, true, false)
 }
 
+func loadSixelImage(idx int) {
+	if len(sixelImages) == 0 {
+		return
+	}
+	if idx < 0 {
+		idx = len(sixelImages) - 1
+	}
+	if idx >= len(sixelImages) {
+		idx = 0
+	}
+	sixelIndex = idx
+	url := sixelImages[idx]
+	go func() {
+		resp, err := http.Get(url)
+		if err != nil {
+			app.QueueUpdateDraw(func() { status.SetText("Image load failed: " + err.Error()) })
+			return
+		}
+		defer resp.Body.Close()
+		data, err := io.ReadAll(resp.Body)
+		if err != nil {
+			app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
+			return
+		}
+		im, _, err := image.Decode(bytes.NewReader(data))
+		if err != nil {
+			app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
+			return
+		}
+		var buf bytes.Buffer
+		buf.WriteString("\x1bPq")
+		enc := sixel.Encoder{}
+		if err := enc.Encode(&buf, im); err != nil {
+			app.QueueUpdateDraw(func() { status.SetText("Sixel encode failed: " + err.Error()) })
+			return
+		}
+		buf.WriteString("\x1b\\")
+		app.QueueUpdateDraw(func() {
+			sixelData = buf.String()
+			sixelReady = true
+			status.SetText(fmt.Sprintf("Image %d/%d (Sixel)", sixelIndex+1, len(sixelImages)))
+		})
+	}()
+}
+
 func showDetail(p core.Post) {
 	detailAuthorID = p.Author.ID
-	sixelShown := false
-	// Prioritize Sixel rendering when supported.
+	sixelReady = false
+	sixelData = ""
+	sixelImages = p.Images
+	sixelIndex = 0
+
+	// Encode first image to Sixel if any.
 	if len(p.Images) > 0 {
-		if _, err := exec.LookPath("img2sixel"); err == nil {
-			func() {
-				// Download to temp file.
-				resp, err := http.Get(p.Images[0])
-				if err != nil {
-					app.QueueUpdateDraw(func() { status.SetText("Image download failed: " + err.Error()) })
-					return
-				}
-				defer resp.Body.Close()
-				data, err := io.ReadAll(resp.Body)
-				if err != nil {
-					app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
-					return
-				}
-				im, _, err := image.Decode(bytes.NewReader(data))
-				if err != nil {
-					app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
-					return
-				}
-				tmp, err := os.CreateTemp("", "citrus-img-*.png")
-				if err != nil {
-					app.QueueUpdateDraw(func() { status.SetText("Temp file failed: " + err.Error()) })
-					return
-				}
-				if err := png.Encode(tmp, im); err != nil {
-					tmp.Close()
-					os.Remove(tmp.Name())
-					app.QueueUpdateDraw(func() { status.SetText("PNG encode failed: " + err.Error()) })
-					return
-				}
-				tmp.Close()
-				path := tmp.Name()
-				app.Suspend(func() {
-					cmd := exec.Command("img2sixel", "-w", "400", path)
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
-					_ = cmd.Run()
-					fmt.Println()
-					fmt.Println("Press Enter to return...")
-					bufio.NewReader(os.Stdin).ReadString('\n')
-				})
-				os.Remove(path)
-				sixelShown = true
-			}()
-		}
+		go func(url string) {
+			resp, err := http.Get(url)
+			if err != nil {
+				app.QueueUpdateDraw(func() { status.SetText("Image load failed: " + err.Error()) })
+				return
+			}
+			defer resp.Body.Close()
+			data, err := io.ReadAll(resp.Body)
+			if err != nil {
+				app.QueueUpdateDraw(func() { status.SetText("Image read failed: " + err.Error()) })
+				return
+			}
+			im, _, err := image.Decode(bytes.NewReader(data))
+			if err != nil {
+				app.QueueUpdateDraw(func() { status.SetText("Image decode failed: " + err.Error()) })
+				return
+			}
+			var buf bytes.Buffer
+			buf.WriteString("\x1bPq")
+			enc := sixel.Encoder{}
+			if err := enc.Encode(&buf, im); err != nil {
+				app.QueueUpdateDraw(func() { status.SetText("Sixel encode failed: " + err.Error()) })
+				return
+			}
+			buf.WriteString("\x1b\\")
+			app.QueueUpdateDraw(func() {
+				sixelData = buf.String()
+				sixelReady = true
+				status.SetText(fmt.Sprintf("Image %d/%d (Sixel)", sixelIndex+1, len(sixelImages)))
+			})
+		}(p.Images[0])
 	}
+
 	text := mdToTview(p.Text)
 	if p.Abi != "" {
 		text += "\n\n追記: " + mdToTview(p.Abi)
 	}
 	detailText.SetText(fmt.Sprintf("%s (%s)  %s\nFavs: %d  Replies: %d\n\n%s", p.Author.Name, p.Author.ID, p.CreatedAt.Format("2006-01-02 15:04"), p.FavoriteCount, p.ReplyCount, text))
-	detailReplies.Clear()
-	detailReplies.AddItem("Loading replies...", "", 0, nil)
-	go func(id string) {
-		replies, err := client.Replies(id, 25, 0)
-		app.QueueUpdateDraw(func() {
-			if err != nil {
-				detailReplies.Clear()
-				detailReplies.AddItem("Replies error: "+err.Error(), "", 0, nil)
-				return
-			}
-			// replies[0] is original; skip
-			detailReplyPosts = []core.Post{}
-			detailReplies.Clear()
-			count := 0
-			for i, r := range replies {
-				if i == 0 {
-					continue
-				}
-				count++
-				detailReplyPosts = append(detailReplyPosts, r)
-				text := runewidth.Truncate(strings.ReplaceAll(r.Text, "\n", " "), termWidth-10, "...")
-				text = mdToTview(text)
-				detailReplies.AddItem(r.Author.Name+": "+text, r.CreatedAt.Format("01-02 15:04"), 0, nil)
-			}
-			if count == 0 {
-				detailReplies.AddItem("No replies.", "", 0, nil)
-			}
-			if count > 0 {
-				app.SetFocus(detailReplies)
-			}
-		})
-	}(p.ID)
-	if sixelShown || len(p.Images) == 0 {
+
+	if sixelReady || len(p.Images) == 0 {
 		detailFlex.ResizeItem(detailImages, 0, 0)
 	} else {
 		detailFlex.ResizeItem(detailImages, 20, 0)
 	}
 	detailImages.Clear()
-	if !sixelShown {
+	if !sixelReady && len(p.Images) > 0 {
 		for _, u := range p.Images {
 			imgView := tview.NewImage()
 			imgView.SetSize(20, 40)
@@ -763,6 +796,43 @@ func showDetail(p core.Post) {
 			}(u, imgView)
 		}
 	}
+
+	detailReplies.Clear()
+	detailReplyPosts = []core.Post{}
+	detailReplies.AddItem("Loading replies...", "", 0, nil)
+	go func(id string) {
+		replies, err := client.Replies(id, 25, 0)
+		app.QueueUpdateDraw(func() {
+			if err != nil {
+				detailReplies.Clear()
+				detailReplies.AddItem("Replies error: "+err.Error(), "", 0, nil)
+				return
+			}
+			detailReplyPosts = []core.Post{}
+			detailReplies.Clear()
+			count := 0
+			for i, r := range replies {
+				if i == 0 {
+					continue
+				}
+				count++
+				detailReplyPosts = append(detailReplyPosts, r)
+				txt := runewidth.Truncate(strings.ReplaceAll(r.Text, "\n", " "), termWidth-10, "...")
+				txt = mdToTview(txt)
+				detailReplies.AddItem(r.Author.Name+": "+txt, r.CreatedAt.Format("01-02 15:04"), 0, nil)
+			}
+			if count == 0 {
+				detailReplies.AddItem("No replies.", "", 0, nil)
+			}
+			if count > 0 {
+				app.SetFocus(detailReplies)
+			}
+		})
+	}(p.ID)
+
+	// key handling for image switching
+	// (registered globally; store current images already in sixelImages)
+
 	pages.SwitchToPage("detail")
 }
 
@@ -825,9 +895,9 @@ func loadUser(userID string) {
 				return
 			}
 			userProfile = u
-			sep := strings.Repeat("─", 40)
 			userScroll = 0
 			app.SetFocus(userText)
+			sep := strings.Repeat("─", 40)
 			userText.SetText(fmt.Sprintf("Name: %s\nID: %s\nOnline: %s  Role: %s\n%s\nProfile:\n%s\n%s\nFollowee: %d  Follower: %d  Posts: %d", u.Name, u.ID, u.OnlineStatus, u.Role, sep, u.Profile, sep, u.FolloweeCount, u.FollowerCount, u.UeuseCount))
 			pages.SwitchToPage("user")
 		})

@@ -3,24 +3,26 @@ module github.com/chihaya/citrus
 go 1.26.0
 
 require (
+	github.com/charmbracelet/x/ansi v0.11.10
 	github.com/gdamore/tcell/v2 v2.13.10
 	github.com/google/uuid v1.6.0
 	github.com/mappu/miqt v0.15.0
+	github.com/mattn/go-runewidth v0.0.31
 	github.com/rivo/tview v0.42.0
+	golang.org/x/image v0.48.0
 	modernc.org/sqlite v1.62.0
 )
 
 require (
-	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
+	github.com/bits-and-blooms/bitset v1.24.6 // indirect
+	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
-	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
+	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/mattn/go-runewidth v0.0.31 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	golang.org/x/image v0.48.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
